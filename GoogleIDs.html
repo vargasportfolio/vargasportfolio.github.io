@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Google IDs | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="index.html">Skills Overview</a></li>
+							<li><a href="#">Security Methodologies</a></li>
+							<li><a href="#">SQL Reporting</a></li>
+							<li><a href="#">CTF Write ups</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="https://www.instagram.com/jonathan.swing/" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+							<li><a href="mailto:11jonathanvargas11@gmail.com?" class="icon solid fa-envelope"><span class="label">Email</span></a></li>
+							<li><a href="https://www.hackthebox.eu/home/users/profile/355309" class="icon solid fa-cube"><span class="label">HackTheBox</span></a></li>
+							<li><a href="https://github.com/vargasportfolio/" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">August 4 , 2020</span>
+									<h1>Google IDs are a public key to your digital footprint.
+									</h1>
+								</header>
+								<p>For every Google account created, several identification numbers and aliases are tied to that account and will be used as a pointer for most ensuing Google HTTP posts and requests. Your online photo albums, reviews, YouTube playlists, and Map contributions can be retrieved using one of these many identification numbers. This open-source intelligence (OSINT) methodology report will dive into how Google IDs can provide a foothold for anyone tracking down the private, yet public, details of an online user.</p>
+								<br>
+						      <h2>The Goal</h2>
+							    <p>Suppose our only piece of information for tracking down an individual is their Gmail address. For the purpose of this report, I will be tracking an email created for this exercise by a user named win32k for a <a href="https://app.hackthebox.eu">HackTheBox</a> OSINT challenge. <br><br>
+							      Let's find <strong>saramedsoncruz@gmail.com's</strong> last known location and a review she left while there. <br>
+						        <br>Typically, there could be several vectors for approaching this objective, but we will be using the email's Google ID.</p><br>
+							<h2>Obtaining a Google ID</h2>
+								<p>When Google+ was an active social media site, getting a user's Google ID was as simple as navigating to that user's Google+ page and locating it in the profile's URL. Because the site has no longer been available for consumer use since April of 2019, this method is deprecated. Nowadays, we can do some minimal packet analysis using Chrome's inspect element tool.
+                              </p>
+								
+							<h3>Step 1</h3>
+								<p>Navigate to <a href="https://contacts.google.com"><b>Google Contacts</b></a> and press the <strong>F12</strong> key to open the inspect element window. Go to the <strong>Network</strong> tab and ensure that there is a blank slate for activity.</p>
+								<figure><span class="image fit"><img src="images/GoogleIDs/NetworkTabBlank.png" alt="" /></span></figure>
+							<h3>Step 2</h3>
+								<p>Once at a blank network screen, go back to the Google Contacts page and click on a contact to bring up their card. Some activity should have populated the Network screen. We can click on the red circle on the top left of the screen to stop recording more activity.
+								</p>
+								<figure>
+									<span class="image fit"><img src="images/GoogleIDs/2.png" alt=""></span>
+									<span class="image fit"><img src="images/GoogleIDs/3.png" alt=""></span>
+								</figure>
+							<h3>Step 3</h3>
+								<p>In the network window, we are interested in what the packet beginning with <strong>batchexecute</strong> contains, so left click on the entry to reveal its contents.</p>
+								<figure><span class="image fit"><img src="images/GoogleIDs/4.png" alt=""></span></figure>
+							  	<p>If we scroll to the bottom of the <strong>Headers</strong> tab, we come across the field named <strong>Form Data</strong>. Here, we will find the 21-digit Google ID beginning with the number 1. In saramedsoncruz's case, that number is <strong>117395327982835488254</strong>. </p>
+						<h2><br>Google Maps Contributions</h2>
+							  <p>Now, we have another vital clue in our investigation: Sara's Google ID. From here, we can find a multitude of Sara's public information. Our goal, however, is to find her last known location and the review she left while there. We can use the link <strong>https://www.google.com/maps/contrib/{Insert_Google_ID}</strong> to find a user's Google Maps contributions. Let's substitute {Insert_Google_ID} with <strong>117395327982835488254</strong> and enter the link into a web browser. Here is our resulting page:</p>
+								<figure><span class="image fit"><img src="images/GoogleIDs/5.png" alt=""></span></figure>
+								<p>In the top right of the screen below the account's name, we know that there is one contribution tied to this user. Clicking on the <strong>Reviews</strong> tab returns the user's most recently reviewed location: the objective of this investigation.</p>
+						<h2><br>Takeaways</h2>
+								<p>Google IDs are public keys that can be used to obtain public information on an individual's online Google activity. For a better peace of mind, try out this exercise with your own Gmail account and explore much of your info is available online through a few simple searches.<br><br>The following links provide more ways to obtain public info using a Google ID:</p>
+								
+								<ul>
+									<li><strong>Google Album Archives:</strong> https://get.google.com/albumarchive/{userID}</li>
+									<li><strong>Map Contributions: </strong>https://www.google.com/maps/contrib/{userID}</li>
+								</ul>
+								
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

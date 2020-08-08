@@ -40,13 +40,13 @@
 						<!-- Post -->
 							<section class="post">
 								<header class="major">
-									<span class="date">August 4 , 2020</span>
-									<h1>OpenBSD Local Privesc and httpd authentication bypass.
+									<span class="date">August 8, 2020</span>
+									<h1>OpenBSD Local Privesc and httpd authentication bypass
 									</h1>
 								</header>
 
 								<p>
-									Insecure cookies and out-of-date operating systems make for a scary combination when it comes to preventing your site from data breaches and takeovers. In this POC report, we will prove a vulnerability that exists in the OpenBSD kernel version 6.6 for httpd services. The following exploits were found in <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-19520">CVE-2019-19520<a> and <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-19521">CVE-2019-19521.</a>
+									Insecure cookies and out-of-date operating systems make for a scary combination when it comes to preventing your site from data breaches and takeovers. In this POC report, we will prove a vulnerability that exists in the OpenBSD kernel version 6.6 for httpd services. The following exploits were found in <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-19520">CVE-2019-19520</a> and <a href="https://nvd.nist.gov/vuln/detail/CVE-2019-19521">CVE-2019-19521.</a>
 								</p>
 
 								<h2><br>
@@ -60,7 +60,139 @@
 									Enumeration
 								</h2>
 								<p>
-									Because we are aiming to breach OpenKeyS' security, we will first scan for any open ports on 10.10.10.199: the target's IP address. By doing this, we are attempting to devise any attack vectors for exploitation. Let's run a quick port scan using the following nmap command:
+									Because we are aiming to breach OpenKeyS' security, we will first scan for any open ports on <strong>10.10.10.199</strong>: the target's IP address. By doing this, we are attempting to devise any attack vectors for exploitation. Let's run a quick port scan using the following <strong>nmap</strong> command:
+								</p>
+									<code>	nmap -Pn -T4 --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit --open -oN nmap/Quick_10.10.10.199.nmap 10.10.10.199</code>
+								<p><br>
+								The following information about 10.10.10.199 is returned:
+								</p>
+
+								<pre><code>	Host is up (0.093s latency).
+	Not shown: 664 filtered ports, 334 closed ports
+	Some closed ports may be reported as filtered due to --defeat-rst-ratelimit
+	PORT   STATE SERVICE
+	<strong>22/tcp open  ssh
+	80/tcp open  http</strong>
+</code></pre>
+								<p>
+								We likely will not have any luck trying to brute force port 22 at the moment, so we will move on to the more inviting option of the two: port 80. Enumeration on port 80 will begin with navigating to the IP address in a web browser. Since the server is open on port 80, we will automatically reach the website's landing page.
+								</p>
+									<figure><span class="image fit"><img src="images/OpenKeyS/1.png" alt=""></span></figure>
+								<p>
+								Our only visible components on this page are some typical login fields. My first speculation was potentially using the<strong> Forgot?</strong> button to find usernames or email addresses, but it is currently not functional. After trying a few common admin credentials, I started up <strong>BurpSuite</strong> to begin prodding further at the login fields.
+								<br><br>
+								Now with Burpsuite running and a proxy setup for Burp to intercept Firefox's browsing activity, we will try logging in with a set of common credentials again in order to get a better idea of what is happening behind the scenes. Here is the intercepted header picked up by Burp:</p>
+
+									<figure><span class="image fit"><img src="images/OpenKeyS/2.png" alt=""></span></figure>
+								<p>Nothing is out of the ordinary here in terms of security flaws, but this may be useful information to have on-hand later on.
+								</p>
+
+								<h2><br>
+								Security Flaw #1 - Accessible Directories</h2>
+								<p>Further prodding with the login field does not lead to anything new. It would be best to continue enumeration in another section of the server. Passive directory tracing from Burp reveals the following directories in use, but a peak inside each directory for interesting content does not reveal anything new either. In order to go deeper to find potential vulnerabilities, we can execute the following <strong>nmap</strong> command for finding vulns in basic ports:</p>
+
+								<code>	nmap -Pn -sV --script vuln -p22,80 -oN nmap/Vulns_10.10.10.199.nmap 10.10.10.199</code>
+								<p><br>
+								This returns crucial information for exploitation:</p>
+								<pre><code>	Nmap scan report for 10.10.10.199
+	Host is up (0.089s latency).
+
+	PORT   STATE SERVICE VERSION
+	22/tcp open  ssh     OpenSSH 8.1 (protocol 2.0)
+	|_clamav-exec: ERROR: Script execution failed (use -d to debug)
+	| vulners:
+	|   cpe:/a:openbsd:openssh:8.1:
+	<strong>|     	CVE-2020-15778	6.8	https://vulners.com/cve/CVE-2020-15778
+	|_    	CVE-2020-14145	4.3	https://vulners.com/cve/CVE-2020-14145</strong>
+	80/tcp open  http    OpenBSD httpd
+	|_clamav-exec: ERROR: Script execution failed (use -d to debug)
+	|_http-csrf: Couldn't find any CSRF vulnerabilities.
+	|_http-dombased-xss: Couldn't find any DOM based XSS.
+	| http-enum:
+	|   /css/: Potentially interesting folder w/ directory listing
+	|   /images/: Potentially interesting folder w/ directory listing
+<strong>	|   /includes/: Potentially interesting folder w/ directory listing
+</strong>	|   /js/: Potentially interesting folder w/ directory listing
+	|_  /vendor/: Potentially interesting folder w/ directory listing
+	|_http-stored-xss: Couldn't find any stored XSS vulnerabilities.
+	|_http-vuln-cve2017-1001000: ERROR: Script execution failed (use -d to debug)
+</code></pre>
+								<p>The CVEs that are listed in association with SSH aren't able to help us at the moment, but we do have a new directory in our knowledge base that was not spotted during the passive directory scan: <strong>/includes</strong>.</p>
+								<p>
+								We can navigate to the<strong> /includes</strong> folder on the server by going to <strong>10.10.10.199/includes</strong>. The path brings us to this file tree page:</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/3.png" alt=""></span></figure>
+								<p>Files with these names make it obvious that the /includes folder should not publicly accessible to anyone directory-busting the site.</p>
+								<ul>
+								<li><strong>Auth.php</strong> is not an accessible file.</li>
+								<li><strong>Auth.php.swp</strong> is readable. Below is a printout of the file.</li></ul>
+								<figure><span class="image fit"><img src="images/OpenKeyS/4.png" alt=""></span></figure>
+								<p>An interesting bit in this php file is within the first couple of strings: <strong>jenniferopenkeys.htb</strong>. There are a few possibilities for what this could mean. We could either have another hidden directory on our hands or a user to authenticate with. In both ways, we will be entering the foothold phase of the attack</p>
+
+								<h2><br>The Foothold</h2>
+								<p>No other hidden directory synonymous to <strong>jennifer</strong> was located, so it is clear that jennifer is most likely a user that has an account with the system. Further enumeration of the <strong>OpenBSD httpd</strong> service on <strong>port 80</strong> reveals a few security vulnerabilities found from <a href="https://www.openwall.com/lists/oss-security/2019/12/04/5">this Openwall case study</a>. The study has found that there exists an <strong>authentication bypass vulnerability</strong> found in OpenBSD that can be exploited by using <strong>-schallenge</strong> as the account's username. A more in-depth description of the hole is elaborated below in a statement from <strong>Qualys Security Advisory:</strong></p>
+								<pre><blockquote>This is the first piece of the puzzle: if an attacker specifies a
+username of the form "-option", they can influence the behavior of the
+authentication program in unexpected ways.
+From the manual page of login_passwd:
+------------------------------------------------------------------------------
+     login_passwd [-s service] [-v wheel=yes|no] [-v lastchance=yes|no] user
+                  [class]
+     ...
+     The service argument specifies which protocol to use with the invoking
+     program.  The allowed protocols are login, challenge, and response.  (The
+     challenge protocol is silently ignored but will report success as passwd-
+     style authentication is not challenge-response based).
+------------------------------------------------------------------------------
+	This is the second piece of the puzzle: if an attacker specifies the
+username "-schallenge" (or "-schallenge:passwd" to force a passwd-style
+authentication), then the authentication is automatically successful and
+therefore bypassed.
+
+</blockquote></pre>
+								<p>Our current port scan of the server did not reveal to us any operating system version number, so we will see if it is vulnerable to this exploit to gain a better understanding of the current version.</p>
+								<p>Back at the login screen, let's use <strong>-schallenge</strong> as the account username and pass for the password. This time, we get a new login error:</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/5.png" alt=""></span></figure>
+								<p>
+								This is good and bad news. We have gained account access to a user named <strong>-schallenge</strong>, but as expected, this user does not exist on the system. However, we can try changing the user we login as with the same authenticated credentials through a cookie interception.</p>
+								<p>
+								In our web browser, let's go back to the login page with the fields already filled out with <strong>-schallenge : pass</strong>. In Burp, we will prepare to intercept the cookie being sent to the site.</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/6.png" alt=""></span></figure>
+								<p>
+								With Burp running and ready to intercept the transmission, login with the server. The following is what Burp catches:</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/7.png" alt=""></span></figure>
+								<p>Before forwarding the packet, modify line number 13 to include <strong>; username=jennifer</strong> at the end of the line. The semicolon will escape the <strong>PHPSESSID cookie</strong> and provide a username to authenticate as. After our modification, it should be</p>
+								<code>	Cookie: PHPSESSID=ash3gttfoi0pg4u73sme0bpeaf; username=jennifer</code>
+								<p>Now forward the packet. We have successfully authenticated as user <strong>jennifer</strong> and obtained access to her <strong>private ssh key</strong></p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/8.png" alt=""></span></figure>
+
+								<h2><br>User Access</h2>
+								<p>After obtaining user jennifer's private key, write the key contents into a file named <strong>private_key.txt</strong> from <strong>BEGIN OPENSSH PRIVATE KEY</strong> to <strong>END OPENSSH PRIVATE KEY</strong> inclusive. Move this file into the <strong>/root/.ssh</strong> directory and change its permissions so that it is only accessible by a root user.</p>
+								<p>SSH into the user shell using</p>
+								<code>ssh -i private_key jennifer@10.10.10.199</code>
+								<figure><span class="image fit"><img src="images/OpenKeyS/9.png" alt=""></span></figure>
+								<p>The private key was used as an ID and we have successfully gained user access into the OpenBSD system.</p>
+
+								<h2><br>Privilege Escalation</h2>
+								<p>The next step in this exploit path is to enumerate for attack vectors in gaining administrative access. Let's run a few commands to determine some more information about our remote system.</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/10.png" alt=""></span></figure>
+								<ul>
+									<li>We are logged in as a user named <strong>jennifer</strong>.</li>
+									<li>We have a fourth attribute to our ID under the group, <strong>wheel</strong>.</li>
+									<li>Our operating system is running on <strong>OpenBSD 6.6 64-bit.</strong> </li>
+								</ul>
+								<p>A quick Google search reveals that there are a few ways to achieve local privilege escalation on our remote kernel version. One in particular occurs due to a <strong>failed check in xlock</strong> and currently has a github proof of concept shell script at <a href="https://github.com/bcoles/local-exploits/blob/master/CVE-2019-19520/openbsd-authroot">this page</a>.</p>
+								<p>
+								On the remote server, navigate to jennifer's home directory and copy the github POC script into an <strong>sh</strong> file. Make it executable using <strong>chmod</strong>, then run the script.</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/11.png" alt=""></span></figure>
+
+								<p>Turns out we have run into a speed bump due to a directory write error. It appears that the script is attempting to create a file in the <strong>/tmp</strong> directory but is being prevented by the OS. Let's see if changing our current directory works when running the script. This time, we will move the POC script into <strong>/tmp</strong> and run it with the same commands.</p>
+								<figure><span class="image fit"><img src="images/OpenKeyS/12.png" alt=""></span></figure>
+								<p>While the script is running, we arrive at a prompt that asks for password, and from the password that we were given two lines above the prompt, we enter it as-is. </p>
+								<p>OpenBSD 6.6 has been successfully rooted.</p>
+
+								<h2><br>Takeaways</h2>
+								<p>Public knowledge of exploits like these typically arise right before an OS's team release a crucial security patch. It is our responsibility as administrators and users alike to ensure our systems are always up to date to curtail any form of exploitation.</p>
+
 
 						</section>
 

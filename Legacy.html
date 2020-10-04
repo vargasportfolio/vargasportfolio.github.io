@@ -41,29 +41,29 @@
 							<section class="post">
 								<header class="major">
 									<span class="date">August 4 , 2020</span>
-									<h1>Remote code execution walkthrough on a WinXP SMB server.
+									<h1>RCE Walkthrough on a WinXP SMB server.
 									</h1>
 								</header>
-								
+
 								<p>Why should we update our systems and applications frequently? This proof of concept (POC) report demonstrates why maintaining a data-sharing server on an outdated operating system is the technological equivalent of hiding your house keys under the doormat. Here is why it is vital for IT managers to implement automated patch update policies to hosting data on compromised systems.</p>
-								
+
 								<h2>Building a house and locking the doors</h2>
 								<p>My father is a full-stack web developer, and as a result, has mastered the art of converting caffeine into lines of code. If we were to put it in terms of building a house, he is essentially the architect, carpenter, and designer in a one-man dev team operation. Once he is done putting up the walls (frameworks), painting the rooms (web design), installing the utilities (databases), and arranging the décor (UX design), he then moves onto locking down the building. This is where he may install locks on all of the doors, shut the windows, and add in a surveillance system if deemed necessary.</p>
-								
+
 								<p>The last step in this web development process is the most essential, due to the fact that everything held inside of the house must only be accessed by those individuals that are permitted to. Analysts in my position can be hired to test out the locks he installed and the security system watching the perimeter. Keeping in line with the house analogy, the following exercise will demonstrate the effect of installing a security system on the house, or server,  that was developed almost a decade before the latest security system.</p>
-								
+
 								<h2>What is a Service Message Block server?</h2>
 								<p>Essentially, an SMB server allows for nodes on a network to have access to shared files and applications. A node may be a user or process, and can only gain access to these files through some form of authentication. However, authentication is straightforward to obtain on servers running SMB 1, or even SMB 2 and 3 for that matter. SMB 1's security has become redundant to the point of most professionals recommending that it should immediately be replaced if it runs on your server.</p>
-								
+
 								<p>To demonstrate this vulnerability, we will be utilizing an intentionally vulnerable remote machine called <a href="https://app.hackthebox.eu/machines/2">Legacy</a> hosted by <a href="https://app.hackthebox.eu/">HackTheBox.</a></p>
-								
+
 								<h2><br>Enumeration</h2>
 								<p>The first step in penetration testing a server we know nothing about is enumeration. This is the process of obtaining as much information about the endpoints as possible, with each endpoint being an open port, service, or directory.</p>
 								<p>Our only given information is a remote server's IP address: <strong>10.10.10.4.</strong></p>
 								<p>Starting up a new Parrot or Kali Linux terminal, we can use the <strong>nmap</strong> command to scan for open ports on our remote server's IP address.</p>
 								<code>[user@parrot]-[/home/user] # nmap -Pn -sCV -p139,445 10.10.10.4</code>
 								<br><br><p>In this case, we are running a quick scan on <strong>ports 139 and 445</strong> for any openings. The resulting output tells us which services are running on these ports and their version numbers:</p>
-								
+
 								<pre><code>
 # Nmap 7.80 scan initiated Thu Aug  6 05:36:13 2020 as: nmap -Pn -sCV -p139,445 -oN nmap/Basic_10.10.10.4.nmap 10.10.10.4
 Nmap scan report for 10.10.10.4
@@ -77,14 +77,14 @@ Service Info: OSs: Windows, Windows XP; CPE: cpe:/o:microsoft:windows, cpe:/o:mi
 Host script results:
 |_clock-skew: mean: 5d00h29m16s, deviation: 2h07m16s, median: 4d22h59m16s
 |_nbstat: NetBIOS name: LEGACY, NetBIOS user: unknown, NetBIOS MAC: 00:50:56:b9:77:19 (VMware)
-| smb-os-discovery: 
+| smb-os-discovery:
 |   <strong>OS: Windows XP</strong> (Windows 2000 LAN Manager)
 |   OS CPE: cpe:/o:microsoft:windows_xp::-
 |   Computer name: legacy
 |   NetBIOS computer name: LEGACY\x00
 |   Workgroup: HTB\x00
 |_  System time: 2020-08-11T09:35:38+03:00
-| smb-security-mode: 
+| smb-security-mode:
 |   account_used: guest
 |   authentication_level: user
 |   challenge_response: supported
@@ -92,11 +92,11 @@ Host script results:
 |_smb2-time: Protocol negotiation failed (SMB2)
 
 								</code></pre>
-								
+
 								<p>From this output, we can tell that the host server is running <strong>SMB 2</strong> on <strong>Windows XP</strong>. This is great news for a penetration tester but underwhelming from the perspective of the server host.</p>
 								<p>Let's check for any known vulnerabilities on ports 139 and 445 using the <strong>nmap</strong> command.</p>
-								
-								<pre><code>	
+
+								<pre><code>
 [user@parrot]-[/home/user] # nmap -Pn -sV --script vuln -p139,445
 
 Nmap scan report for 10.10.10.4
@@ -111,7 +111,7 @@ Service Info: OSs: Windows, Windows XP; CPE: cpe:/o:microsoft:windows, cpe:/o:mi
 
 Host script results:
 |_samba-vuln-cve-2012-1182: NT_STATUS_ACCESS_DENIED
-| smb-vuln-ms08-067: 
+| smb-vuln-ms08-067:
 |   VULNERABLE:
 |   <strong>Microsoft Windows system vulnerable to remote code execution (MS08-067)</strong>
 |     State: <strong>VULNERABLE</strong>
@@ -119,14 +119,14 @@ Host script results:
 |           The Server service in Microsoft Windows 2000 SP4, XP SP2 and SP3, Server 2003 SP1 and SP2,
 |           Vista Gold and SP1, Server 2008, and 7 Pre-Beta allows remote attackers to execute arbitrary
 |           code via a crafted RPC request that triggers the overflow during path canonicalization.
-|           
+|
 |     Disclosure date: 2008-10-23
 |     References:
 |       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-4250
 |_      https://technet.microsoft.com/en-us/library/security/ms08-067.aspx
 |_smb-vuln-ms10-054: false
 |_smb-vuln-ms10-061: ERROR: Script execution failed (use -d to debug)
-| smb-vuln-ms17-010: 
+| smb-vuln-ms17-010:
 |   <strong>VULNERABLE:</strong>
 |   <strong>Remote Code Execution vulnerability in Microsoft SMBv1 servers (ms17-010)</strong>
 |     State: VULNERABLE
@@ -134,7 +134,7 @@ Host script results:
 |     Risk factor: HIGH
 |       A critical remote code execution vulnerability exists in Microsoft SMBv1
 |        servers (ms17-010).
-|           
+|
 |     Disclosure date: 2017-03-14
 |     References:
 |       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0143
@@ -142,30 +142,30 @@ Host script results:
 |_      https://blogs.technet.microsoft.com/msrc/2017/05/12/customer-guidance-for-wannacrypt-attacks/
 </code></pre>
 								<p>From the output, we get two pointers for high-level <strong>remote code execution (RCE)</strong> vulnerabilities with one of them having a disclosure date in October of 2008; the equivalent of your front door's keypad having its passcode buttons worn down after 12 years of usage. Moving on in our enumeration, we will investigate what exactly <strong>CVE-2008-4250</strong> is referring to.</p>
-								
+
 								<p>From the <a href="https://nvd.nist.gov/vuln/detail/CVE-2008-4250">National Vulnerability Database:</a></p>
 								<blockquote>"The Server service in Microsoft Windows 2000 SP4, XP SP2 and SP3, Server 2003 SP1 and SP2, Vista Gold and SP1, Server 2008, and 7 Pre-Beta allows remote attackers to execute arbitrary code via a crafted RPC request that triggers the overflow during path canonicalization, as exploited in the wild by Gimmiv.A in October 2008, aka "Server Service Vulnerability."</blockquote>
 								<p>From the vulnerability description, we understand that this is an overflow exploit that allows for RCE. Furthermore, our <strong>nmap</strong> scan reveals that the service is vulnerable to <strong>MS08-067</strong>, which is shorthand for a <strong>Metasploit</strong> module. Now, we can move on to the exploit.</p>
-								
+
 								<h2><br>Exploitation</h2>
 								<p>In a terminal window, run the <strong>msfconsole</strong> command as <strong>root</strong>.</p>
 								<figure><span class="image fit"><img src="images/Legacy/1.png" alt=""></span></figure>
-								
+
 								<p>At the MSF prompt, we will be searching for the aforementioned module named <strong>MS08-067</strong> using the command <strong>search MS08-067</strong>. What we find next is that there is, in fact, a module with this name located at <strong>exploit/windows/smb/ms08_067_netapi</strong>.</p>
 								<figure><span class="image fit"><img src="images/Legacy/2.png" alt=""></span></figure>
-								
+
 								<p>Begin using the module with the command <strong>use exploit/windows/smb/ms08_067_netapi</strong>. A prompt follows with this directory as its prefix. Running the command <strong>show options</strong> lets us know what parameters we have to establish before running the exploit. For this module, the only required parameter that remains null is <strong>RHOSTS</strong>, or the remote host that we will be launching the attack on.</p>
 								<figure><span class="image fit"><img src="images/Legacy/3.png" alt=""></span></figure>
-								
+
 								<p>Use <strong>set RHOSTS 10.10.10.4</strong> to state that our remote host is located at 10.10.10.4. The only task remaining is running the <strong>Run</strong> command. Below is the console output of sending an overflow payload onto port 445 and uploading a meterpreter shell on the system.</p>
 								<figure><span class="image fit"><img src="images/Legacy/4.png" alt=""></span></figure>
-								
+
 								<p>Our shell has been uploaded, and we now have admin access to the Legacy server.</p>
-								
+
 								<h2><br>Takeaways</h2>
 								<p>Keeping both your operation system and services up to date can substantially lower the risk of system exploitation. In this exercise, we witnessed the effects of both of these pointers being disregarded.</p>
-								
-								
+
+
 							</section>
 
 					</div>

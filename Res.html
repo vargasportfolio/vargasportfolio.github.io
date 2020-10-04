@@ -56,7 +56,7 @@
                 <h2>80 : HTTP</h2>
                 <p>Apache httpd 2.4.18 ((Ubuntu))</p>
                 <p>Landing page was the default Apache Ubtunu site page. When reporting this in an actual pentest writeup, it would be categorized as an information disclosure vulnerability due to the fact that it lets the user know where the website is running on the local machine. This may come in handy later.</p>
-                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_113001.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_113001"></span></figure>
+                <figure><span class="image fit"><img src="images/Res/Screenshot_20201003_113001.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_113001"></span></figure>
 
                 <br><br>
                 <h2>6379 : Redist</h2>
@@ -69,7 +69,7 @@
 SELECT 1
 KEYS *</code></pre>
                 <p>Using the <b>INFO</b> command allowed me to view some information about the Redis instance, and a few lines stood out to me in particular.</p>
-                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_162030.png" alt="Screenshot_20201003_162030" style="zoom: 67%;" /></span></figure>
+                <figure><span class="image fit"><img src="images/Res/Screenshot_20201003_162030.png" alt="Screenshot_20201003_162030" style="zoom: 67%;" /></span></figure>
                 <p>Redis was executed from the directory, <strong>/home/vianka/redis-stable/src/redis-server</strong>, proving that a user named <strong>vianka</strong> exists on the system.</p>
                 <p>Furthermore, we can view active server configurations by running <b>CONFIG GET *</b> from the Redis command line interface. The directory setting also appears at line 251 in the form of:</p>
                 <pre><code>251) &quot;dir&quot;
@@ -104,7 +104,7 @@ KEYS *</code></pre>
                 <p>I will be using the <a href='http://pentestmonkey.net/tools/web-shells/php-reverse-shell'>PenTest Monkey reverse shell</a>. If you are using Kali Linux or Parrot Security, this can be found in <strong>/usr/share/webshells/php/php-reverse-shell.php</strong>, or run <code>locate php-reverse-shell.php</code> on your local machine if it isn&#39;t in the default directory.</p>
                 <ol start='' >
                 <li><p>Copy the php-reverse-shell php file to your current working directory. Be sure to open it with a text editor and input your own tun0 IP and port number. </p>
-                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_164632.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_164632"></span></figure>
+                <figure><span class="image fit"><img src="images/Res/Screenshot_20201003_164632.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_164632"></span></figure>
                 </li>
                 <li><p>Start up a simple HTTP server on port 80 using:</p>
                 <pre><code class='language-shell' lang='shell'>python -m SimpleHTTPServer 80
@@ -150,7 +150,7 @@ KEYS *</code></pre>
                 <p>&nbsp;</p>
                 <h2>Privilege Escalation</h2>
                 <p>With user Vianka, we can run the <code>sudo -l</code> command to view what binaries we can run using sudo.</p>
-                <figure><span class="image fit"><img src="/home/jonathan/Pictures/Screenshot_20201003_140824.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_140824"></span></figure>
+                <figure><span class="image fit"><img src="images/Res/Screenshot_20201003_140824.png" referrerpolicy="no-referrer" alt="Screenshot_20201003_140824"></span></figure>
                 <p>The last two lines state that this user can run all commands as sudo with a password, meaning we can run <code>sudo su</code> to gain root privileges. The root flag is now viewable at /root/root.txt.</p>
 
 						</section>

@@ -1,4 +1,4 @@
-images/yotp<!DOCTYPE HTML>
+<!DOCTYPE HTML>
 
 <html>
 	<head>
@@ -41,18 +41,31 @@ images/yotp<!DOCTYPE HTML>
 							<section class="post">
 								<header class="major">
 									<span class="date">October 14, 2020</span>
-									<h1>Year of the Pig
+									<h1>Year of the Pig <br>TryHackMe Writeup
 									</h1>
 								</header>
-
-                <!doctype html>
-                <html>
-                <head>
-                <meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
-                <title>Writeup</title></head>
-                <br><br><body><h1>Summary</h1>
+								<h2>Contents:</h2>
+								<ul>
+								<li><b>Summary</b></li>
+									<li><b>Port Scanning</b></li>
+									<li><b>Inspecting the Webpage</b></li>
+										<ul>
+											<li><b>Index - Marco's Blog</b></li>
+											<li><b>/Admin and /Login.php</b></li>
+										</ul>
+									<li><b>The Foothold</b></li>
+										<ul>
+											<li><b>Creating Our Own Password Dictionary</b></li>
+											<li><b>Brute Forcing the Login</b></li>
+										</ul>
+									<li><b>Authenticated Web Enumeration</b></li>
+									<li><b>SSH: Marco</b></li>
+									<li><b>Pivoting to WWW-Data</b></li>
+									<li><b>Cracking Crutis' Hash</b></li>
+									<li><b>Obtaining Root</b></li>
+								</ul>
+                <br><body><h1>Summary</h1>
                 <p>Year of the Pig is a <a href='https://tryhackme.com/room/yearofthepig'>TryHackMe challenge</a> released on October 9th, 2020, by <a href='https://tryhackme.com/p/MuirlandOracle'>MuirlandOracle</a>. Throughout the challenge, we will explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
-                <p>&nbsp;</p>
                 <p>&nbsp;</p>
                 <h1>Port Scanning</h1>
                 <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the below command, we can understand the machine&#39;s open, accessible ports.</p>

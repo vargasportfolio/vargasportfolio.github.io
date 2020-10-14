@@ -40,7 +40,7 @@ images/yotp<!DOCTYPE HTML>
 						<!-- Post -->
 							<section class="post">
 								<header class="major">
-									<span class="date">October 4, 2020</span>
+									<span class="date">October 14, 2020</span>
 									<h1>Year of the Pig
 									</h1>
 								</header>
@@ -56,9 +56,9 @@ images/yotp<!DOCTYPE HTML>
                 <p>&nbsp;</p>
                 <h1>Port Scanning</h1>
                 <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the below command, we can understand the machine&#39;s open, accessible ports.</p>
-                <pre><code>nmap -Pn -sCV -p22,80 -oN nmap/Basic_10.10.104.243.nmap &lt;IP&gt;</code></pre>
+                <pre><code>nmap -Pn -sCV -p- -oN nmap/Basic_10.10.104.243.nmap &lt;IP&gt;</code></pre>
                 <p>We get the following output from our basic nmap scan:</p>
-                <pre><code># Nmap 7.80 scan initiated Sun Oct 11 10:01:33 2020 as: nmap -Pn -sCV -p22,80 -oN nmap/Basic_10.10.104.243.nmap 10.10.104.243
+                <pre><code># Nmap 7.80 scan initiated Sun Oct 11 10:01:33 2020 as: nmap -Pn -sCV -p- -oN nmap/Basic_10.10.104.243.nmap 10.10.104.243
 Nmap scan report for 10.10.104.243
 Host is up (0.69s latency).
 

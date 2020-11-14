@@ -47,28 +47,28 @@
 								</header>
 								<h2>Contents:</h2>
 								<ol>
-								<li><b>Summary</b></li>
-									<li><b>Port Scanning</b></li>
-									<li><b>Inspecting the Webpage</b></li>
+								<li><b><a href='#summary'>Summary</a></b></li>
+									<li><b><a href='#port-scanning'>Port Scanning</a></b></li>
+									<li><b><a href='#inspecting'>Inspecting the Webpage</a></b></li>
 										<ul>
 											<li>Index - Marco's Blog</li>
 											<li>/Admin and /Login.php</li>
 										</ul>
-									<li><b>The Foothold</b></li>
+									<li><b><a href='#foothold'>The Foothold</a></b></li>
 										<ul>
 											<li>Creating Our Own Password Dictionary</li>
 											<li>Brute Forcing the Login</li>
 										</ul>
-									<li><b>Authenticated Web Enumeration</b></li>
-									<li><b>SSH: Marco</b></li>
-									<li><b>Pivoting to WWW-Data</b></li>
-									<li><b>Cracking Crutis' Hash</b></li>
-									<li><b>Obtaining Root</b></li>
+									<li><b><a href='#webenum'>Authenticated Web Enumeration</a></b></li>
+									<li><b><a href='#ssh-marco'>SSH: Marco</a></b></li>
+									<li><b><a href='#www-data'>Pivoting to WWW-Data</a></b></li>
+									<li><b><a href='#curtis-hash'>Cracking Crutis' Hash</a></b></li>
+									<li><b><a href='#root'>Obtaining Root</a></b></li>
 								</ol>
-                <br><body><h2>Summary</h2>
+                <br><body><h2 id='summary'>Summary</h2>
                 <p>Year of the Pig is a <a href='https://tryhackme.com/room/yearofthepig'>TryHackMe challenge</a> released on October 9th, 2020, by <a href='https://tryhackme.com/p/MuirlandOracle'>MuirlandOracle</a>. Throughout the challenge, we will explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
                 <p>&nbsp;</p>
-                <h2>Port Scanning</h2>
+                <h2 id='port-scanning'>Port Scanning</h2>
                 <p>As always, we are going to begin enumerating this machine as a non-privileged user with <strong>nmap</strong>. By running the command below, we can see the machine&#39;s open, accessible ports.</p>
                 <pre><code>nmap -Pn -sCV -p- -oN nmap/Basic_10.10.104.243.nmap &lt;IP&gt;</code></pre>
                 <p>We get the following output from our basic nmap scan:</p>
@@ -94,7 +94,7 @@ Service detection performed. Please report any incorrect results at https://nmap
                 </ol>
                 <p>Without looking further into how the system works, we can already begin devising an attack vector for the host: foothold with HTTP, use SSH for remote code execution, then pivot or escalate privileges to system root. Of course, this is easier said than done and there can be several twists and turns along the way. Before we get too ahead of ourselves, we will begin manually enumerating the website hosted at this address.</p>
                 <p>&nbsp;</p>
-                <h2>Inspecting the Webpage</h2>
+                <h2 id='inspecting'>Inspecting the Webpage</h2>
                 <h3>Index - Marco&#39;s Blog</h3>
                 <p>The landing page is a fun little autobiography about a retired Italian Airforce pilot who began developing his website as a hobby. There are three sections of the website that only scratch the surface about the many adventures he&#39;s had.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161109.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161109"></span></figure>
@@ -127,7 +127,7 @@ http://10.10.104.243:80/server-status (Status: 403) [Size: 278]</code></pre>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161456.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161456"></span></figure>
                 <p>The password hint is oddly specific. If we are completely relying on the password hint, the password is going to appear exactly as described. The problem is we aren&#39;t sure what counts as a memorable word in Marco&#39;s book, or if we would be able to find his password in a wordlist, so we are going to need a ton of guesses to choose from. More specifically, <strong>5,600</strong> of our own guesses. The next section describes how we will automate this with Python.</p>
                 <p>&nbsp;</p>
-                <h2>The Foothold</h2>
+                <h2 id='foothold'>The Foothold</h2>
                 <h3>Creating Our Own Password Dictionary</h3>
                 <p>Now, we have three ingredients for how Marco creates his passwords:</p>
                 <ol>
@@ -204,18 +204,18 @@ for word in memorableWords:
 
                 </ol>
                 <p>&nbsp;</p>
-                <h2>Authenticated Web Enumeration</h2>
+                <h2 id='webenum'>Authenticated Web Enumeration</h2>
                 <p>Up to this point, we have a user to log in as at the website and can begin enumerating internally. Upon logging in, we are presented with some simple configurations like add user, delete user, and change password. What stands out here is the <strong>Commands</strong> section of the admin panel. Navigating to this page brings us to a field where we can potentially execute arbitrary commands on the server as <strong>www-data</strong>.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_174001.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_174001"></span></figure>
                 <p>It was unsettling how easily this RCE section of the admin panel was handed to us. <strong>whoami</strong> and <strong>id</strong> works to see who we are executing commands as, but not to my surprise, that&#39;s pretty much the extent of useful commands we can execute from this interface. Looking deeper into this at the moment would be considered a rabbit hole.</p>
-                <h2>SSH: Marco</h2>
+                <h2 id='ssh-marco'>SSH: Marco</h2>
                 <p>Marco&#39;s credentials for gaining access to his website&#39;s admin panel are the same for logging into the system as marco, meaning we can ssh into the host as Marco.</p>
                 <pre><code>ssh marco@&lt;IP&gt;</code></pre>
                 <p><strong>Flag1.txt</strong> is present in his home directory.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_174422.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_174422"></span></figure>
                 <p>Marco is not able to run sudo commands, so my initial method of escalating privileges was shot down swiftly. Upon further enumeration, there is another user on the system, <strong>curtis</strong>, and an <strong>admin.db</strong> file located in <strong>/var/www</strong>. By naming convention, this is the database file that contains all of the site&#39;s user hashes, which means that we have a path of pivoting into <strong>curtis&#39;</strong> account who may have more privileges that we do. However, we are unable to view the database file because it is owned by <strong>www-data.</strong> Our only choice now is to figure out a way to break the RCE constraints on the <strong>commands.php</strong> page.</p>
                 <p>&nbsp;</p>
-                <h2>Pivoting to WWW-Data</h2>
+                <h2 id='www-data'>Pivoting to WWW-Data</h2>
                 <p>Located in <strong>/var/www/html/admin</strong> is the <strong>commands.php</strong> file that is used for RCE on the admin panel. It happens to be owned by <strong>www-data</strong> and the <strong>web-developers</strong> group, which we happen to be a part of. Here is a snippet of the current <strong>commands.php</strong> source code:</p>
                 <pre><code class='language-php' lang='php'>&lt;?php
 //Totally useless script to catch hackers out, eh, Marco? You old rogue!
@@ -288,12 +288,12 @@ if (isset($_POST[&quot;command&quot;])){
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180010.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180010"></span></figure>
                 <p>&nbsp;</p>
                 <p>&nbsp;</p>
-                <h2>Cracking Curtis&#39; Hash</h2>
+                <h2 id='curtis-hash'>Cracking Curtis&#39; Hash</h2>
                 <p>From the output of the cat command on admin.db using the admin panel&#39;s web shell, we can view both Marco and Curtis&#39; password hashes. The first time I tried cracking this hash, I used John and that didn&#39;t seem to do the trick, so for this CTF, we are using <a href='https://hashes.com/en/decrypt/hash'>hashes.com</a>. Input curtis&#39; hash in the text box and a plaintext password is returned in seconds.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180447.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180447"></span></figure>
                 <p>&nbsp;</p>
                 <p>&nbsp;</p>
-                <h2>Obtaining Root</h2>
+                <h2 id='root'>Obtaining Root</h2>
                 <p>Flag2.txt is present in Curtis&#39; home directory.</p>
                 <p>Once ssh&#39;d into Curtis&#39; session, we can begin enumeration under his privileges. Running <strong>sudo -l</strong> showed an interesting sudo permission:
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_180652.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_180652"></span></figure>

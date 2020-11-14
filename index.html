@@ -30,7 +30,7 @@
 						<a href="index.html" class="logo">Portfolio</a>
 					</header>
 
-				<!-- Nav -->
+				<!-- Nav
 					<nav id="nav">
 						<ul class="links">
 							<li class="active"><a href="index.html">Skills Overview</a></li>
@@ -45,61 +45,36 @@
 							<li><a href="https://github.com/chungobungo/" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
 						</ul>
 			  </nav>
+			-->
 
 				<!-- Main -->
 					<div id="main">
 
 						<!-- Featured Post -->
-							<article class="post featured">
+							<section class="post">
 								<header class="major">
-									<span class="date">Overview</span>
-									<h2>Hello, I am Jonathan</h2>
-							      <p style="text-align:justify"><br>I am a senior undergraduate at the University of Texas at San Antonio majoring in Cyber Security and Information Systems. I am enthusiastic about hardening operating systems and network security and strive to lead the next generation of cyber security professionals. <br><br>My goal is to find opportunities to apply my diligently-learned principles of security with a team that encourages innovation and leadership.
+									<h2 style="font-size:2.625rem; font-weight:400;">Hello! I am Jonathan</h2>
 
-I have authored various penetration testing methodology articles on this site, organized a cyber security CTF competition for two ethical hacking online communities, and acquired industry IT experience during my undergraduate studies through two internships and one contract opportunity. Through extracurricular activities, I have consulted with leaders in my field on security practices and headed an on-campus organization with weekly lessons.
-
-<br><br>I am motivated by a deep desire to develop secure networks and ensure our private data remains private.</p>
-                                </header>
+							      <p style="text-align:left;"><br>I am a senior undergraduate at the University of Texas at San Antonio studying Cyber Security and Information Systems. I am enthusiastic about hardening operating systems and network security and strive to lead the next generation of cyber security professionals. My motivation to build strong, secure networks derives from a robust desire to ensure our private data remains private.</p>
+										<p style="text-align:left;">Throughout this site, you will find various articles I have authored involving penetration testing methodologies and write ups for vulnerable machines on <a href="https://app.hackthebox.eu/">Hack The Box</a> and <a href="https://tryhackme.com/">Try Hack Me</a>. For further information on my academic and professional achievements, please review my resume with the button below.</p>
+								</header>
 								<!--<a href="#" class="image main"><img src="images/pic01.jpg" alt="" /></a>-->
 								<ul class="actions special">
-									<li><a href="Resume.pdf" class="button large">Get Résumé</a></li>
+									<li><a href="Resume.pdf" class="button large">View Résumé</a></li>
 								</ul>
-							</article>
+							</section>
 
 						<!-- Posts -->
 							<section class="posts">
 								<article>
 									<header>
-										<span class="date">OSINT | Maps | Packet Analysis | Privacy</span>
-										<h2><a href="GoogleIDs.html">Google IDs are a public key to your digital footprint.</a><br></h2>
+										<span class="date">CTF | Writeup | Try Hack Me | sudoedit | symbolic link</span>
+										<h2><a href="YearOfThePig.html">Year of the Pig - THM Writeup<br></a></h2>
 									</header>
-									<a href="GoogleIDs.html" class="image fit"><img src="images/GoogleIDThumb.jpg" alt=""></a>
-									<p style="text-align:justify">For every Google account created, several identification numbers and aliases are tied to that account and will be used as a pointer for most ensuing Google HTTP posts and requests.</p><br><br>
+									<a href="YearOfThePig.html" class="image fit"><img src="images/yotpThumb.png" alt="" /></a>
+									<p>Explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
 									<ul class="actions special">
-										<li><a href="GoogleIDs.html" class="button">Read More</a></li>
-									</ul>
-								</article>
-								<article>
-									<header>
-										<span class="date">RCE | Windows XP | SMB | Nmap | Dir Busting | CVE</span>
-										<h2><a href="Legacy.html">Remote code execution walkthrough on a WinXP SMB server.</a></h2>
-									</header>
-									<a href="Legacy.html" class="image fit"><img src="images/Legacy/Thumb.jpg" alt="" height="230px"></a>
-									<p style="text-align:justify">This proof of concept (POC) report demonstrates why maintaining a data-sharing server on an outdated operating system is the technological equivalent of hiding your house keys under the doormat. Here is why it is vital for IT managers to implement automated patch update policies to hosting data on compromised systems.</p>
-									<ul class="actions special">
-										<li><a href="Legacy.html" class="button">Read more</a></li>
-									</ul>
-								</article>
-								<article>
-									<header>
-										<span class="date">CVE | CTF | OpenBSD | Port 80 | SSH Keys | Cookies</span>
-										<h2><a href="OpenKeyS.html">OpenBSD Local Privesc and httpd authentication bypass
-										</a></h2>
-									</header>
-									<a href="OpenKeyS.html" class="image fit"><img src="images/OpenKeysThumb.jpg" alt="" /></a>
-									<p style="text-align:justify">Insecure cookies and out-of-date operating systems make for a scary combination when it comes to preventing your site from data breaches and takeovers. In this POC report, we will prove a vulnerability that exists in the OpenBSD kernel version 6.6 for httpd services.</p>
-									<ul class="actions special">
-										<li><a href="OpenKeyS.html" class="button">read more</a></li>
+										<li><a href="YearOfThePig.html" class="button">read more</a></li>
 									</ul>
 								</article>
 								<article>
@@ -116,13 +91,36 @@ I have authored various penetration testing methodology articles on this site, o
 								</article>
 								<article>
 									<header>
-										<span class="date">CTF | Writeup | Try Hack Me | sudoedit | symbolic link</span>
-										<h2><a href="YearOfThePig.html">Year of the Pig - THM Writeup<br></a></h2>
+										<span class="date">CVE | CTF | OpenBSD | Port 80 | SSH Keys | Cookies</span>
+										<h2><a href="OpenKeyS.html">OpenBSD Local Privesc and httpd authentication bypass
+										</a></h2>
 									</header>
-									<a href="YearOfThePig.html" class="image fit"><img src="images/yotpThumb.png" alt="" /></a>
-									<p>Explore the repurcussions of having a password hint, automating the creation of a custom password list using Python, brute forcing a login page with OWASP ZAP, pivoting between three different users on the system, and exploiting a sudoedit wildcard path vulnerability using a symbolic link attack.</p>
+									<a href="OpenKeyS.html" class="image fit"><img src="images/OpenKeysThumb.jpg" alt="" /></a>
+									<p style="text-align:justify">Insecure cookies and out-of-date operating systems make for a scary combination when it comes to preventing your site from data breaches and takeovers. In this POC report, we will prove a vulnerability that exists in the OpenBSD kernel version 6.6 for httpd services.</p>
 									<ul class="actions special">
-										<li><a href="YearOfThePig.html" class="button">read more</a></li>
+										<li><a href="OpenKeyS.html" class="button">read more</a></li>
+									</ul>
+								</article>
+								<article>
+									<header>
+										<span class="date">OSINT | Maps | Packet Analysis | Privacy</span>
+										<h2><a href="GoogleIDs.html">Google IDs are a public key to your digital footprint</a><br></h2>
+									</header>
+									<a href="GoogleIDs.html" class="image fit"><img src="images/GoogleIDThumb.jpg" alt=""></a>
+									<p style="text-align:justify">For every Google account created, several identification numbers and aliases are tied to that account and will be used as a pointer for most ensuing Google HTTP posts and requests.</p><br><br>
+									<ul class="actions special">
+										<li><a href="GoogleIDs.html" class="button">Read More</a></li>
+									</ul>
+								</article>
+								<article>
+									<header>
+										<span class="date">RCE | Windows XP | SMB | Nmap | Dir Busting | CVE</span>
+										<h2><a href="Legacy.html">Remote code execution walkthrough on a WinXP SMB server</a></h2>
+									</header>
+									<a href="Legacy.html" class="image fit"><img src="images/Legacy/Thumb.jpg" alt="" height="230px"></a>
+									<p style="text-align:justify">This proof of concept (POC) report demonstrates why maintaining a data-sharing server on an outdated operating system is the technological equivalent of hiding your house keys under the doormat. Here is why it is vital for IT managers to implement automated patch update policies to hosting data on compromised systems.</p>
+									<ul class="actions special">
+										<li><a href="Legacy.html" class="button">Read more</a></li>
 									</ul>
 								</article>
 								<article>

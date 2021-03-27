@@ -1,0 +1,119 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Self Hosting a CTF | Jonathan Vargas</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a href="index.html" class="logo">Jonathan Vargas</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+							<section class="post">
+								<header class="major">
+									<span class="date">March 27, 2021</span>
+									<h1>Self Hosting a CTF
+									</h1>
+								</header>
+
+								<br>
+								<p><strong>Goal:</strong> Run a simple OpenVPN server from your home in order for a select group of CTF players to participate in team practices. Players should receive an ovpn pack and connect to the VPN server where the target machine is located and accessible. We will achieve this by setting up a VPS using the OpenVPN Road Warrior installer, assigning VPN certificates to clients, and running an openvpn client from inside the target vulnerable machine. <br> <br>I am writing this guide because finding any tutorials on how to configure an OpenVPN server for Vulnhub CTF practice has proven to be more difficult than the search for bigfoot. In order for future enthusiasists like myself to have an easier time getting a VPS running, here is my guide.</p>
+
+								<br><br><br><h2>Contents:</h2>
+								<ol>
+									<li><b><a href='#prereq'>Prerequisites</a></b></li>
+									<li><b><a href='#setup'>Setting up an OpenVPN Server</a></b></li>
+									<li><b><a href='#portforward'>Port Forwarding your VPN server to the Internet</a></b></li>
+									<li><b><a href='#access'>Accessing the VPN From a Client Machine</a></b></li>
+									<li><b><a href='#vulnhub'>Setting up a Vulnerable VM on the OpenVPN Server</a></b></li>
+									<li><b><a href='#manage'>Managing VPN Users</a></b></li>
+								</ol>
+
+
+
+								<br><br><br>
+								<h2 id='prereq'>Prerequisites</h2>
+								<ul>
+								<li>A decent Ubuntu machine for hosting the virtual private server</li>
+								<li>A vulnerable virtualbox ova downloaded from Vulnhub.com</li>
+								<li>A client machine</li>
+								</ul>
+								<br><br><br>
+								<h2 id='setup'>Setting up an OpenVPN Server</h2>
+								<p>The <a href='https://github.com/Nyr/openvpn-install'>Road Warrior OVPN Github repo</a>  streamlines the VPS setup process in just a few simple steps. It is efficient for getting small networks up and running quickly without the hassle of manually setting up each client. It automates a lot of the heavy lifting for you, right down to installing a new OpenVPN server or managing clients.</p>
+								<p><strong>From your Ubuntu server</strong>, run the installer as root from the repo and follow the in-process instructions for setting up the OVPN instance. It will ask for your public IPv4 and IPv6 at some point. These are easily obtainable in the command line via <code>wget -qO- http://ipecho.net/plain | xargs echo</code> (IPv4) and <code>curl icanhazip.com</code> (IPv6).</p>
+								<p>When the installer has finished without issues, you can confirm your OVPN server is running by executing <code>systemctl status openvpn-server@server.service</code>.</p>
+								<p>If you want to add/delete users from the VPN or restart with a clean installation, run the same script again from the repo. It will automatically detect that a server has been setup already and will prompt you for additional actions to take.</p>
+								<br><br><br>
+								<h2 id='portforward'>Port Forwarding your VPN server to the Internet</h2>
+								<p>Port forwarding to the Internet comes with risks, as you are literally opening up a port from your home network to be accessible from the public Internet. You can complete the following steps from any computer that is attached to the network. Here is how you can port forward your secure VPN server to be accessible to the Internet. </p>
+								<ol start='' >
+								<li>Login to your router&#39;s access panel (in my instance, it was located at the HTTP  interface at 192.168.0.1)</li>
+								<li>Navigate to the port forwarding settings. This will be different on every router model, but mine was located at the Advanced Tab &gt; Advanced Setup &gt; Port Forwarding / Port Triggering</li>
+								<li>Select Port Forwarding under &quot;Please select the service type&quot;</li>
+								<li>Select Add Custom Service to begin adding a custom port forward rule.</li>
+								<li>Allow traffic to the UDP port 1194 where the server is located. Make changes corresponding to the screenshot below where Internal IP Address is equal to your OpenVPN server&#39;s LAN IP. Hit apply when you are finished.
+									<br><br>
+									<figure><span class="image fit"><img src="images/SelfHost/portforward.png" alt=""></span></figure>
+									</li>
+
+								</ol>
+								<p><br>At this point, your OpenVPN server should be accessible via your public IPv4 address.</p>
+								<br><br><br>
+								<h2 id='access'>Accessing the VPN From a Client Machine</h2>
+								<p>If you recall from earlier, the setup process with the road warrior script asked for the name of your first client and generated an OVPN configuration pack which should be stored in your server&#39;s root user directory. In my case, jvarga11 is the first client&#39;s name and was stored as /root/jvarga11.ovpn. Transfer this pack to the client machine using <code>scp</code>, then run it as <code>sudo openvpn jvarga11.ovpn</code>. If everything was done correctly, you should see the message &quot;Initialization Sequence Completed&quot; on the client machine and a new tun0 interface should be added.</p>
+								<br><br><br>
+								<h2 id='vulnhub'>Setting up a Vulnerable VM on the OpenVPN Server</h2>
+								<p>Luckily, there is a way for you to open up the vulnerable VM&#39;s file system without having to go through all of the steps to exploit it in the first place. First, import the machine and set the network adapter to NAT. Attach the vulnerable machine&#39;s VDI file to a VM you have access to in Virtualbox like so. In my case, I attached it alongside a Parrot Security VM.
+								<br><br>
+								<figure><span class="image fit"><img src="images/SelfHost/vulndisk.png" alt=""></span></figure>
+								<br></p>
+								<p>Start up Parrot, then use the file manager to mount the vulnerable machine&#39;s hard drive. Open a terminal as root, then navigate to the vulnerable machine&#39;s file system and create a backdoor in the password file so you can log in as root without having to exploit it. As root, you can install an openvpn client using apt and connect the machine to the network.</p>
+								<br><br><br>
+								<h2 id='manage'>Managing VPN Users</h2>
+								<p>Run the bash script that you downloaded in &quot;Setting up&quot; section. This time, it will give you some options that allow you to revoke client certificates, add new clients, and delete the server files.</p>
+								<br>
+								<p>And that&#39;s all! At this point, you have an OpenVPN server running that is available from the public Internet where you can then issue certificates, run vulnerable machines, and host CTF practices with your team.</p>
+								<p>&nbsp;</p>
+
+
+
+                </body>
+                </html>
+
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>Jonathan Vargas</li><li>Cybersec Portfolio</li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
